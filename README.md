@@ -16,272 +16,6 @@ DragonCore 不是松散的脚本工具集合。它是一个受治理的系统。
 
 ---
 
-## 为什么是 19？ / Why 19?
-
-DragonCore 使用 **19 个核心席位**构成最小治理内核。
-
-不是 18，也不是 20。
-
-因为 19 是目前冻结的**最小可治理核心**（Minimum Governable Core）。
-
-*DragonCore uses 19 core seats. Not 18. Not 20. Because 19 is the current frozen minimum governable core.*
-
-### 19 是最小闭环 / 19 is the Minimum Closed Loop
-
-一个可治理的系统必须能够独立完成以下功能，且这些功能必须由不同席位承担，不能塌缩到同一角色：
-
-1. **发起与执行**（Initiate & Execute）— 天权/开阳
-2. **技术监管**（Implementation Supervision）— 开阳/鲁班
-3. **风险审查**（Risk Review）— 天璇/白虎
-4. **质量审查**（Quality Review）— 玉衡
-5. **独立审计**（Independent Audit）— 包拯/杨戬
-6. **挑战与阻断**（Challenge & Block）— 白虎/玉衡
-7. **分歧解决**（Disagreement Resolution）— 天枢
-8. **升级未决冲突**（Escalation）— 天璇/天枢
-9. **坏结果回滚**（Rollback）— 天枢/哪吒
-10. **完成态归档**（Archive）— 瑶光/丰都大帝
-11. **危险分支终止**（Termination）— 丰都大帝/钟馗
-12. **最终权威保留**（Final Authority）— 天枢
-
-*A governable system must be able to: initiate work, supervise implementation, review risk, review quality, audit independently, challenge unsafe action, resolve disagreement, escalate conflict, rollback bad outcomes, archive state, terminate invalid branches, and preserve final authority — all as distinct functions.*
-
-**如果减少到 18**：
-- 某些关键权力必然塌缩到同一角色
-- 执行者开始自我批准
-- 审查变成形式
-- 审计失去独立性
-- 最终权威过载
-- 归档和终止成为事后诸葛亮
-
-*If reduced to 18: critical powers collapse together. Execution begins self-approving. Review becomes symbolic. Audit loses independence. Final authority becomes overloaded.*
-
-**如果增加到 20**：
-- 协调成本上升
-- 问责扩散
-- 顶层权威变得模糊
-- 治理变成仪式
-- 复杂度增长快于实际控制力
-
-*If increased to 20: coordination cost rises, accountability diffuses, top-level authority becomes ambiguous, governance turns ceremonial.*
-
-**所以 19 不是装饰，不是玄学，也不是 popularity contest。**
-它是 DragonCore 目前冻结的架构。
-
-*So 19 is not decorative, not numerology, not a popularity contest. It is the current frozen architecture.*
-
-### 宪法立场 / Constitutional Position
-
-**19 是 DragonCore 的冻结核心治理内核。**
-
-你可以不认同它。
-但你必须 beat it。
-
-*19 is the frozen core governance kernel of DragonCore. You do not have to prefer it. You only have to beat it.*
-
----
-
-## 19 核心席位 / The 19-Seat Core
-
-DragonCore 的治理内核由 **19 个固定席位**组成。它们是承载权力的治理单元，不是装饰性人格。
-
-*DragonCore organizes governance around 19 fixed seats. These are authority-bearing units, not decorative personas.*
-
-### 北斗七星 / The Seven Northern Pivot Seats
-
-形成系统的主治理脊柱：
-
-| 席位 | 职能 | Seat | Function |
-|------|------|------|----------|
-| **天枢** | 最终门禁，终局裁决，宪法中心 | Tianshu | Final gate, final adjudication, constitutional center |
-| **天璇** | 风险审查，挑战，升级压力 | Tianxuan | Risk review, challenge, escalation pressure |
-| **天玑** | 长期战略，结构推理 | Tianji | Long-horizon strategy, structural reasoning |
-| **天权** | 编排，协调，执行路由 | Tianquan | Orchestration, coordination, execution routing |
-| **玉衡** | 质量门禁，质量审查，失败时否决 | Yuheng | Quality gate, quality review, veto under failure |
-| **开阳** | 实现监督，交付端控制 | Kaiyang | Implementation supervision, delivery-side control |
-| **瑶光** | 归档连续性，终结纪律，历史保存 | Yaoguang | Archive continuity, closure discipline, historical preservation |
-
-### 四象 / The Four Directional Seats
-
-扩展系统视角和方向压力：
-
-| 席位 | 方向 | 职能 | Seat | Function |
-|------|------|------|------|----------|
-| **青龙** | 东 | 外向方向，扩展，外部战略对齐 | Qinglong | Outward direction, expansion, external strategic alignment |
-| **白虎** | 西 | 对抗性挑战，红队压力，强力审查 | Baihu | Adversarial challenge, red-team pressure, forceful review |
-| **朱雀** | 南 | 表达，沟通，外部代表 | Zhuque | Expression, communication, external representation |
-| **玄武** | 北 | 防御，监控，遏制，稳定性保存 | Xuanwu | Defense, monitoring, containment, stability preservation |
-
-### 八仙护法 / The Eight Functional Guardian Seats
-
-承载专门化、不可冗余的权力：
-
-| 席位 | 职能 | Guardian | Function |
-|------|------|----------|----------|
-| **杨戬** | 验证，真实性检查，虚假进展检测 | Yangjian | Verification, reality check, false-progress detection |
-| **包拯** | 审计，判断，完整性审查 | Baozheng | Audit, judgment, integrity review |
-| **钟馗** | 清除，威胁移除，无效状态清理 | Zhongkui | Purge, threat removal, invalid-state cleanup |
-| **鲁班** | 工程，建造，构建执行 | Luban | Engineering, construction, build execution |
-| **诸葛亮** | 战略设计，规划深度，场景推理 | Zhugeliang | Strategic design, planning depth, scenario reasoning |
-| **哪吒** | 快速执行，压力下干预 | Nezha | Rapid execution, intervention under pressure |
-| **西王母** | 资源平衡，分配，约束管理 | Xiwangmu | Resource balancing, allocation, constraint management |
-| **丰都大帝** | 终止，不可逆关闭，无效分支结束 | Fengdudadi | Termination, irreversible closure, invalid-branch ending |
-
-这 19 个席位共同构成我们验证过的最小完整治理内核。
-
-*These 19 seats together form the smallest complete governance kernel we have validated.*
-
----
-
-## 为什么每个部门都重要 / Why Each Department Matters
-
-DragonCore 区分**治理席位**和**功能部门**。
-
-**席位持有权力。**
-**部门执行工作。**
-
-部门是 19 席位核心的下游操作延伸，不是替代品。
-
-*DragonCore separates governance seats from functional departments. Seats hold authority. Departments execute. Departments are downstream operational extensions of the 19-seat core.*
-
-### 核心部门 / Core Departments
-
-| 部门 | 功能 | 必要性 | Department | Function | Why Essential |
-|------|------|--------|------------|----------|---------------|
-| **工程部** | 实现和技术交付 | 没有工程部，什么也建不成 | Engineering | Implementation and technical delivery | Without it, nothing is actually built |
-| **审计部** | 独立审查和问责 | 没有审计，自我批准取代问责 | Audit | Independent examination and accountability | Without it, self-approval replaces accountability |
-| **风控部** | 风险检测和门禁 | 没有风控，坏输出走得太远才被阻止 | Risk Control | Risk detection and gating | Without it, bad outputs travel too far before being stopped |
-| **监控部** | 运行时可见性和预警 | 没有监控，失败发现得太晚 | Monitoring | Runtime visibility and early warning | Without it, failure is detected too late |
-| **平台部** | 编排和基础设施协调 | 没有平台，执行变得碎片化和脆弱 | Platform | Orchestration and infrastructure coordination | Without it, execution becomes fragmented and brittle |
-| **档案部** | 证据保存，关闭，历史连续性 | 没有档案，系统无法保存制度记忆或正式关闭 | Archives | Evidence preservation, closure, and historical continuity | Without it, the system cannot preserve institutional memory or formal closure |
-
-每个部门都是生产级治理所必需的。
-
-*Each department is non-optional if the goal is production-grade governance.*
-
----
-
-## 系统如何从 19 向下扩展 / Why the System Scales Downward from 19
-
-DragonCore 不是通过发明随机的新顶层权威来扩展。
-
-它通过**从 19 席位核心向下**延伸到结构化执行分支来扩展。
-
-*DragonCore does not scale by inventing random new top-level authorities. It scales downward from the 19-seat core into structured execution branches.*
-
-这意味着未来增长遵循以下模式：
-
-- 新领域成为**部门**（Departments）
-- 部门可细分为**局**（Bureaus）、**司**（Offices）、**处**（Divisions）或**专门单位**（Specialized Units）
-- 但顶层权威始终锚定在 19 席位治理内核
-
-*This means future growth follows: new domains become departments; departments may subdivide into bureaus, offices, divisions; but top-level authority remains anchored in the 19-seat core.*
-
-可能的未来形式包括：
-
-- **XX门** — 新职能门户
-- **XX司** — 专业执行司
-- **XX局** — 领域办公室
-- **XX处** — 专门工程处
-- **XX院** — 专门审计分支
-- **XX阁** — 合规和档案子单位
-- **XX台** — 外部协调办公室
-- **XX监** — 运行时特定委员会
-
-*Possible future forms: XX门 (New functional gates), XX司 (Specialized execution offices), XX局 (Domain offices), XX处 (Specialized engineering bureaus), XX院 (Dedicated audit branches), XX阁 (Compliance and archival sub-units), XX台 (External coordination offices), XX监 (Runtime-specific councils).*
-
-规则很简单：
-
-**自由扩展执行，谨慎扩展权威。**
-
-*The rule is simple: Expand execution freely. Expand authority slowly.*
-
-新的执行结构可以根据需要添加。
-新的顶层权威必须被视为宪法变更，而不是方便补丁。
-
-任何部门、办公室、局或未来扩展单位都不得覆盖 19 席位核心的权威。
-
-*No department, office, bureau, or future expansion unit may overwrite the authority of the 19-seat core.*
-
----
-
-## 治理原则 / Governance Principles
-
-DragonCore 建立在以下原则之上：
-
-- 权力必须明确 / Authority must be explicit
-- 执行不得自我批准 / Execution must not self-approve
-- 决策必须可追溯 / Decisions must be traceable
-- 分歧必须可治理 / Disagreement must be governable
-- 挑战必须正式，不是修辞 / Challenge must be formal, not rhetorical
-- 回滚必须可执行 / Rollback must be executable
-- 归档必须可索引 / Archive must be indexable
-- 终止必须明确 / Termination must be explicit
-- 生产行为必须账本化 / Production behavior must be ledgered
-- 治理必须强于便利 / Governance must remain stronger than convenience
-
-这些不是美学原则。它们是操作约束。
-
-*These are not aesthetic principles. They are operational constraints.*
-
----
-
-## 生产状态 / Production Status
-
-DragonCore 已通过分阶段治理验证和受控生产准备，验证了以下机制：
-
-- 否决（Veto）✅
-- 冲突解决（Conflict Resolution）✅
-- 升级（Escalation）✅
-- 回滚（Rollback）✅
-- 归档（Archive）✅
-- 终止（Termination）✅
-- 真实外部输入处理（Real External Input）✅
-- 观察下多轮稳定性（Multi-Run Stability）✅
-
-*DragonCore has validated: veto, conflict resolution, escalation, rollback, archive, termination, real external input handling, and multi-run stability under observation.*
-
-系统已进入受控生产阶段，具有：
-
-- 生产批准（Production Approval）
-- 护栏（Guardrails）
-- 操作手册（Runbook）
-- 账本化操作（Ledgered Operation）
-- 冻结观察规则（Frozen Observation Rules）
-- 漂移监控信号（Drift Monitoring Signals）
-- 审查检查点（Review Checkpoints）
-
-*The system has entered controlled production with: approval, guardrails, runbook, ledgered operation, frozen observation rules, drift monitoring, and review checkpoints.*
-
-DragonCore 设计不仅仅是为了产生输出，而是为了在压力下保持可治理性。
-
-*DragonCore is designed not merely to produce output, but to preserve governability under pressure.*
-
----
-
-## 文化来源 / Cultural Source
-
-DragonCore 从华夏文明治理中汲取灵感：
-分层权威、委托责任、可审计性、档案连续性和有序权力。
-
-*DragonCore draws inspiration from Chinese civilizational governance: layered authority, delegated responsibility, auditability, archival continuity, and ordered power.*
-
-它的命名系统是文化的。
-它的治理模型是操作的。
-
-*Its naming system is cultural. Its governance model is operational.*
-
-这不是装饰用的神话。
-这是用于执行的治理。
-
-*This is not mythology for decoration. It is governance for execution.*
-
-重点不是模仿过去。
-重点是将秩序、合法性、审查、记录和终结的验证原则传承到 AI 系统。
-
-*The point is not to imitate the past. The point is to carry forward tested principles of order, legitimacy, review, record, and closure into AI systems.*
-
----
-
 ## 为什么是龙 / Why Dragon
 
 ### 中英文命名差异 / The Cross-Lingual Naming Distinction
@@ -325,60 +59,335 @@ DragonCore **不要**借龙之名做装饰、做表面品牌、做 borrowed symb
 
 *A lobster may borrow the character 龙 in Chinese naming. DragonCore is built around what the dragon actually represents.*
 
-### 龙作为模型 / The Dragon as Model
+---
 
-在华夏文明中，龙不是随机吉祥物。
-它代表有序权力、合法性、适应性、连续性和协调代理。
+## 为什么是 19？/ Why 19?
 
-*In Chinese civilization, the dragon is not a random mascot. It represents ordered power, legitimacy, adaptability, continuity, and coordinated agency.*
+DragonCore 使用 **19 个核心席位**构成最小治理内核。
 
-这就是 DragonCore 使用龙作为其核心形象的原因。
+不是 18，也不是 20。
 
-*That is why DragonCore uses the dragon as its central image.*
+因为 19 是目前冻结的**最小可治理核心**（Minimum Governable Core）。
 
-它不是噪音的生物。
-它是受治理力量的象征。
+### 19 是最小闭环 / 19 is the Minimum Closed Loop
 
-*It is not a creature of noise. It is a symbol of governed force.*
+一个可治理的系统必须能够独立完成以下功能，且这些功能必须由不同席位承担：
 
-DragonCore 不仅仅把龙用作表面品牌。
-它把龙当作模型：
+1. **发起与执行** — 天权
+2. **技术监管** — 开阳/鲁班
+3. **风险审查** — 天璇/白虎
+4. **质量审查** — 玉衡
+5. **独立审计** — 包拯/杨戬
+6. **挑战与阻断** — 白虎/玉衡
+7. **分歧解决** — 天枢
+8. **升级未决冲突** — 天璇/天枢
+9. **坏结果回滚** — 天枢/哪吒
+10. **完成态归档** — 瑶光/丰都大帝
+11. **危险分支终止** — 丰都大帝/钟馗
+12. **最终权威保留** — 天枢
 
-- 有结构的权威 / Authority with structure
-- 有合法性的权力 / Power with legitimacy
-- 有记录的行动 / Action with record
-- 有裁决的分歧 / Disagreement with adjudication
-- 有归档或终止的结束 / Ending with archive or termination
+**如果减少到 18**：关键权力塌缩，执行者自我批准，审查变成形式。
 
-**真龙，不是龙虾。**
-**True Dragon. Not Claw.**
+**如果增加到 20**：协调成本上升，问责扩散，治理变成仪式。
+
+**所以 19 不是装饰，不是玄学。**它是 DragonCore 目前冻结的架构。
+
+### 宪法立场 / Constitutional Position
+
+**19 是 DragonCore 的冻结核心治理内核。**
+
+你可以不认同它。但你必须 beat it。
 
 ---
 
-## 品牌立场 / Brand Position
+## 19 核心席位详解 / The 19 Seats in Detail
 
-DragonCore 是一个受治理的系统，不是一堆工具。
+DragonCore 的治理内核由 **19 个固定席位**组成。它们不是装饰性人格，而是承载具体权力的治理单元。
 
-*DragonCore is a governed system, not a pile of tools.*
+这 19 席分为三层：**北斗七星**（核心治理）+ **四象**（方向制衡）+ **八仙护法**（专项权力）。
 
-它是为必须保持以下特性的多智能体 AI 构建的：
+---
 
-- 可治理 / Governable
-- 可审查 / Reviewable
-- 可审计 / Auditable
-- 可纠正 / Correctable
-- 可保存 / Preservable
-- 生产可用 / Production-capable
+### 第一层：北斗七星 / The Seven Northern Pivot Seats
 
-*It is built for multi-agent AI that must remain: governable, reviewable, auditable, correctable, preservable, production-capable.*
+北斗七星形成系统的主治理脊柱，对应现代企业中的 C-suite，但权力更加分离。
 
-如果一个系统不能在压力下保持权力边界，它就不是治理级的。
+| 席位 | 神话原型 | 治理职能 | 权力驱动 | 核心冲突 |
+|------|----------|----------|----------|----------|
+| **天枢** | 北极星/天帝所在 | **CEO/最高裁决**<br>最终门禁、终局裁决、宪法中心 | 主线定义权<br>最终裁决权 | vs 瑶光(破边界)<br>vs 青龙(分散资源) |
+| **天璇** | 北斗第二星/主变化 | **COO/资源调度**<br>资源分配、节奏控制 | 资源分配权<br>流程控制权 | vs 地官(口径冲突)<br>vs 哪吒(打乱节奏) |
+| **天玑** | 北斗第三星/主谋略 | **CTO/技术路线**<br>技术栈定义、架构标准 | 技术标准权<br>架构定义权 | vs 开阳(赶工期)<br>vs 瑶光(技术风险) |
+| **天权** | 北斗第四星/主平衡 | **CSO/战略定义**<br>议题定义、赛道排序 | 战略排序权<br>议题定义权 | vs 瑶光(新赛道)<br>vs 诸葛亮(分析深度) |
+| **玉衡** | 玉衡/主衡量 | **CRO/风控门禁**<br>标准制定、veto权 | 质量否决权<br>标准制定权 | vs 瑶光(创新激进)<br>vs 哪吒(快速突击) |
+| **开阳** | 开阳/武曲星 | **执行编排**<br>任务排程、交付问责 | 执行调度权<br>交付控制权 | vs 玉衡(风控拖延)<br>vs 包拯(审计深度) |
+| **瑶光** | 瑶光/破军星 | **创新跃迁**<br>创新预算、破局资源 | 创新突破权<br>边界打破权 | vs 玉衡(风控保守)<br>vs 天枢(主线约束) |
 
-*If a system cannot preserve authority boundaries under pressure, it is not governance-grade.*
+**北斗七星的权力制衡**:
+- **天枢(定)** vs **瑶光(变)**: 稳定与创新的顶层冲突
+- **天璇(调)** vs **天玑(控)**: 资源与技术的分配矛盾
+- **天权(划)** vs **开阳(推)**: 规划与执行的天然张力
+- **玉衡(卡)** vs **全员**: 风控与效率的永恒斗争
 
-DragonCore 是为了守住这些边界而构建的。
+---
 
-*DragonCore is built to hold those boundaries.*
+### 第二层：四象 / The Four Symbols
 
-**真龙，不是龙虾。**
-**Dragon, not Claw.**
+四象是四方神兽，负责**军团/战役层**的制衡，确保治理覆盖所有方向。
+
+| 席位 | 方位 | 神话原型 | 治理职能 | 核心规则 |
+|------|------|----------|----------|----------|
+| **青龙** | 东 | 苍龙/孟章神君 | **新赛道探索**<br>探索预算、机会捕捉 | 必须给出 stop condition |
+| **白虎** | 西 | 白虎/监兵神君 | **红队/压测**<br>高危测试、失效模式 | 必须给出修复窗口 |
+| **朱雀** | 南 | 朱雀/陵光神君 | **外部叙事**<br>品牌话语权、承诺审核 | 必须等白虎验证完成 |
+| **玄武** | 北 | 玄武/执明神君 | **稳态保障**<br>稳定性预算、监控资源 | 必须给青龙探索空间 |
+
+**四象军团的战役规则**:
+1. **青龙**: 抢机会，但必须给出 stop condition
+2. **白虎**: 拆问题，但必须给出修复窗口
+3. **朱雀**: 讲故事，但必须等白虎验证完成
+4. **玄武**: 保稳定，但必须给青龙探索空间
+
+**核心冲突**:
+- **青龙(探)** vs **白虎(验)**: 探索与验证的张力
+- **朱雀(讲)** vs **白虎(验)**: 承诺与验证的冲突
+- **青龙(新)** vs **玄武(稳)**: 新方向与稳定性的矛盾
+
+---
+
+### 第三层：八仙护法 / The Eight Guardian Immortals
+
+八仙护法是**关键功能席**，提供超越常规官僚制的专门化权力。
+
+| 席位 | 姓名 | 神话原型 | 核心权力 | 为什么是他 |
+|------|------|----------|----------|------------|
+| **杨戬** | 二郎神 | 三眼天神/听调不听宣 | **质量监督**<br>指标真实性核验、看穿伪装 | 拥有**天眼**，能看穿一切 deception 和 illusion。在 AI 治理中，负责检测"虚假进度" —— 当 agent 声称任务完成但实际未完成时，杨戬能看穿。 |
+| **包拯** | 包青天 | 北宋清官/铁面无私 | **独立审计**<br>绕过三省直报、责任链追溯 | **黑脸**代表 impartiality，**月牙**代表 clear night vision。无法被贿赂或恐吓，负责审计、调查权力滥用、交付 verdicts。 |
+| **钟馗** | 捉鬼天师 | 驱魔真君/鬼王 | **异常肃清**<br>污染清理、恶性拦截 | 手持宝剑的**鬼王**，专门猎杀恶鬼。在治理中负责**威胁消除** —— 清除 toxic agents、移除 compromised components。 |
+| **鲁班** | 工匠祖师 | 公输班/百工圣祖 | **工程平台**<br>工具链标准、自动化框架 | 发明了**锯子、云梯、无数工具**。代表最高工艺标准。确保代码不仅是功能性的，而且是**优雅、可维护、能流传**的。 |
+| **诸葛亮** | 卧龙军师 | 蜀汉丞相/智慧化身 | **首席参谋**<br>复杂规划、多线推演 | **空城计**的 strategists。handles 复杂多步骤战役、危机规划、straightforward solutions 失败的情况。 |
+| **哪吒** | 三太子 | 莲花化身/风火轮 | **太子/先遣**<br>快速突击、打穿僵局 | **莲花化身**，手持乾坤圈和火尖枪。代表**速度和果断行动**。当系统失败需要立即响应时，哪吒负责 rapid deployment 和 crisis management。 |
+| **西王母** | 昆仑主母 | 女仙之首/蟠桃园主 | **稀缺资源**<br>高阶配额、长期储备 | 掌管**蟠桃** —— 终极稀缺资源。决定谁得到什么、何时、为什么。在 AI 治理中管理 compute budgets、API quotas。 |
+| **丰都大帝** | 冥界之主 | 北阴酆都大帝/鬼帝 | **归档终止**<br>死线裁决、风险封存 | 统治**阴间** —— 终结、审判、死后世界的 realm。拥有**终止**（结束项目）和**归档**（保存到永恒）的权力。 |
+
+**八仙护法的功能覆盖**:
+- **监督层**: 杨戬(质量) + 包拯(审计) + 钟馗(肃清)
+- **工程层**: 鲁班(平台) + 诸葛亮(规划)
+- **执行层**: 哪吒(突击)
+- **资源层**: 西王母(稀缺)
+- **终局层**: 丰都大帝(终止)
+
+---
+
+## 完整的权力冲突网络 / The Complete Conflict Network
+
+DragonCore 的治理不是和谐的，而是**充满建设性张力**的。
+
+### 顶层冲突
+- **天枢(定)** ←→ **瑶光(变)**: 稳定与创新的顶层战争
+- **天璇(调)** ←→ **天玑(控)**: 资源与技术的永恒争夺
+
+### 风控冲突
+- **玉衡(卡)** ←→ **全员**: 风控与效率的永恒斗争
+
+### 战役冲突
+- **青龙(探)** ←→ **白虎(验)**: 探索与验证的张力
+- **朱雀(讲)** ←→ **白虎(验)**: 承诺与验证的冲突
+- **青龙(新)** ←→ **玄武(稳)**: 新方向与稳定性的矛盾
+
+### 功能冲突
+- **包拯(审)** ←→ **开阳(推)**: 审计深度 vs 交付速度
+- **哪吒(快)** ←→ **玉衡(卡)**: 快速突击 vs 风控门禁
+- **杨戬(真)** ←→ **朱雀(美)**: 真实数据 vs 品牌包装
+
+---
+
+## 发言风格对比 / Communication Styles
+
+不同席位有截然不同的发言风格：
+
+**保守派（玉衡、玄武、包拯、丰都大帝）**:
+- "风险等级为X，不能通过"
+- "监控覆盖率不达标"
+- "此议须经审计"
+- "不是所有东西都该继续活着"
+
+**激进派（瑶光、青龙、哪吒）**:
+- "现有方案已触顶，必须尝试..."
+- "新机会窗口期仅X个月"
+- "此事已拖太久，今日必决"
+- "失败我担，成功共享"
+
+**验证派（白虎、杨戬、钟馗）**:
+- "未经白虎压测，任何上线都是赌博"
+- "表面数据X，深层分析Y"
+- "发现异常，立即清扫"
+
+**资源派（天璇、西王母、鲁班）**:
+- "资源占用率数据显示..."
+- "此资源稀缺，仅X份"
+- "此操作重复X次/天，必须工具化"
+
+---
+
+## 华夏人物库 / The Huaxia Persona Registry
+
+19 席只是核心。DragonCore 拥有**可扩展的华夏人物库**，目前已定义 30+ 神话/历史人物，可用于：
+
+- 二级机构/局/司/台主官选配
+- 专项计划代号命名
+- 候补主官池
+
+### 已定义的 Registry 分类
+
+**A. 最高秩序/象征层**:
+- **玉皇大帝** — 秩序象征、形式最高权威
+- **西王母** — 珍稀资源、长期储备
+- **丰都大帝** — 冻结/黑名单/终止/归档
+
+**B. 三清/元规则层**:
+- **元始天尊** — 元规则/本源秩序
+- **灵宝天尊** — 法度/规则/仪式
+- **太上老君** — 炼化/稳态/工艺
+
+**C. 教化/传承/导师层**:
+- **广成子** — 传承/师法/高阶训练
+- **太乙真人** — 修补/重构/再造
+
+**D. 审计/法度/纪律/裁决层**:
+- **狄仁杰** — 侦查/复杂案情抽丝剥茧
+- **韩非** — 法家/制度执行/权限边界
+- **商鞅** — 激进制度变革/奖惩
+- **关羽** — 信义/纪律/守约
+
+**E. 工程/工具/发明/结构层**:
+- **墨子** — 务实工程/节用/防御
+- **张衡** — 观测/仪表/预警
+- **扁鹊** — 诊断/故障前识别
+
+**F. 创新/冲锋/突击/高风险层**:
+- **后羿** — 定点打击/精确清除
+- **孙悟空/齐天大圣** — 破局/高创造性试探/越界式创新
+- **共工** — 破坏性测试/压力冲击
+- **祝融** — 高热性能推进/极限性能
+
+**G. 文档/品牌/文化表达层**:
+- **李白** — 风格、气势、表达、语言美学
+- **杜甫** — 长文、现实感、沉重记录
+- **苏轼** — 综合表达、公共沟通
+- **庄子** — 抽象思辨、边界松动
+
+**H. 情报/谋略/战略层**:
+- **鬼谷子** — 博弈/谈判/对手建模
+- **张良** — 谋划/隐性布局
+- **孙武** — 战法/配置/兵力调度
+- **刘伯温** — 大局预判/结构性趋势
+
+**I. 基础文明/母体/长时层**:
+- **伏羲** — 规则建模/结构抽象
+- **女娲** — 修补/连续性/恢复
+- **神农** — 试错/资源平衡/实验归纳
+- **黄帝** — 整合/文明组织/总协调
+
+### 使用指南 / Usage Guide
+
+**二级机构选配**:
+```
+韩非司 — 制度与权限治理
+张衡台 — 监控与仪表盘
+扁鹊局 — 系统诊断
+太乙台 — 危机修补
+狄仁杰司 — 异常调查
+墨子局 — 成本优化工程
+后羿组 — 关键瓶颈清除
+共工台 — 破坏性测试
+```
+
+**专项计划代号**:
+```
+李白计划 — 品牌内容系统
+韩非计划 — 权限治理与审批链
+孙武计划 — 竞争策略与市场攻防
+墨子计划 — 成本压缩工程
+张衡计划 — 系统观测平台
+扁鹊计划 — 诊断与预警系统
+```
+
+**人格选择原则**:
+1. 先有空缺，再选人格
+2. 冲突是特性不是 bug
+3. 权力驱动必须明确
+4. 分层: core_governance > supervisory > warband > special_office
+
+---
+
+## 核心部门 / Core Departments
+
+席位持有权力，部门执行工作。
+
+| 部门 | 功能 | 必要性 |
+|------|------|--------|
+| **工程部** | 实现和技术交付 | 没有工程部，什么也建不成 |
+| **审计部** | 独立审查和问责 | 没有审计，自我批准取代问责 |
+| **风控部** | 风险检测和门禁 | 没有风控，坏输出走得太远 |
+| **监控部** | 运行时可见性和预警 | 没有监控，失败发现得太晚 |
+| **平台部** | 编排和基础设施协调 | 没有平台，执行碎片化 |
+| **档案部** | 证据保存，关闭，历史连续性 | 没有档案，无法保存制度记忆 |
+
+---
+
+## 向下扩展原则 / Downward Scaling Principle
+
+DragonCore 不通过发明随机的新顶层权威来扩展。
+
+它通过**从 19 席位核心向下**延伸到结构化执行分支来扩展。
+
+**扩展模式**:
+- 新领域成为**部门**
+- 部门可细分为**局**（Bureaus）、**司**（Offices）、**处**（Divisions）、**台**（Stations）、**阁**（Pavilions）
+- 顶层权威始终锚定在 19 席位核心
+
+**可能的未来形式**:
+- XX门 — 新职能门户
+- XX司 — 专业执行司
+- XX局 — 领域办公室
+- XX台 — 外部协调台
+- XX阁 — 合规和档案子单位
+
+**规则**: 自由扩展执行，谨慎扩展权威。
+
+---
+
+## 生产状态 / Production Status
+
+🟢 **Controlled Production** — Since RUN-011
+
+已验证机制:
+- Veto / Escalation / Adjudication
+- Rollback / Archive / Termination
+- Real external input handling
+- Multi-run stability
+
+---
+
+## 治理原则 / Governance Principles
+
+- 权力必须明确
+- 执行不得自我批准
+- 决策必须可追溯
+- 分歧必须可治理
+- 挑战必须正式，不是修辞
+- 回滚必须可执行
+- 归档必须可索引
+- 终止必须明确
+- 生产行为必须账本化
+- 治理必须强于便利
+
+---
+
+## License
+
+MIT — We open source the governance framework.  
+The civilization metaphor is ours.
+
+**真龙，不是龙虾。**  
+**True Dragon. Not Claw.**
