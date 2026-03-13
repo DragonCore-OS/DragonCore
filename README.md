@@ -3,140 +3,145 @@
   
   # DragonCore 龙核
   
+  **面向多智能体的治理优先操作系统**
+  
   **Governance-First Operating System for Multi-Agent AI**
   
-  *True Dragon. Not Claw.*  
-  *真龙，不是龙虾。*
+  *真龙，不是龙虾。*  
+  *True Dragon. Not Claw.*
+  
+  [🌐 English Version](README_EN.md)
 </div>
 
 ---
 
-## Why Dragon
+## 为什么是龙
 
-In English, "lobster" is just lobster.  
-In Chinese, the word for lobster is **龙虾**: **龙** (dragon) + **虾** (shrimp).
+在英文里，**lobster** 就只是 *lobster*。
 
-That creates a distinction that matters:  
-**A lobster borrows the dragon's name. DragonCore is built around what the dragon represents.**
+但在中文里，龙虾这个词写作 **龙虾**：**龙** (dragon) + **虾** (shrimp)。
 
-| Dragon Symbolizes | What We Built |
-|-------------------|---------------|
-| Order | Layered governance (三省六部) |
-| Legitimacy | Traceable authority, final arbitration |
-| Coordination | Multi-agent deliberation, not chaos |
-| Continuity | Archive, inheritance, civilizational memory |
-| Adaptability | Escalation, rollback, executable recovery |
+这创造了一个关键的区别：
+**龙虾借用了龙的名字，而 DragonCore 建立在龙真正代表的东西之上。**
 
-Most multi-agent systems today are built like **lobsters**: flat, tool-using, grasping at tasks without clear authority chains.
+| 龙象征 | DragonCore 的实现 |
+|--------|------------------|
+| 有序 / Order | 三省六部治理架构 |
+| 合法性 / Legitimacy | 可追溯的权威，终局裁决 |
+| 协调 / Coordination | 多智能体协商，非混乱竞争 |
+| 连续性 / Continuity | 归档、传承、文明记忆 |
+| 适应性 / Adaptability | 升级、回滚、可执行恢复 |
 
-DragonCore is built like a **dragon**: governed, layered, traceable, auditable.
+当今大多数多智能体系统像**龙虾**一样构建：扁平、工具导向、没有清晰的权威链条。
 
----
-
-## What DragonCore Solves
-
-DragonCore is a production-grade governance kernel for multi-agent AI systems.
-
-**Core Capabilities:**
-- **19-Seat Governance Core**: Frozen authority structure (北斗七星 + 四象 + 八仙护法)
-- **Process Isolation**: tmux-based multi-agent concurrency with true parallelism
-- **Clean Execution**: Git worktree environments for stateless, reproducible runs
-- **Production Ledgering**: Every run tracked, archived, and auditable
-
-**Verified Mechanisms:**
-- ✅ Veto / Conflict Resolution / Escalation
-- ✅ Rollback / Archive / Termination
-- ✅ Real external input handling
-- ✅ 17+ production rounds validated
+DragonCore 像**龙**一样构建：受治理的、分层的、可追溯的、可审计的。
 
 ---
 
-## Why 19
+## DragonCore 解决什么
 
-19 is the **Minimum Governable Core**.
+DragonCore 是一个面向多智能体 AI 系统的生产级治理内核。
 
-- **18 seats**: Authority collapse (someone self-approves)
-- **20 seats**: Coordination cost exceeds benefit (ceremony without control)
-- **19 seats**: The frozen threshold where governance remains possible
+**核心能力：**
+- **19席治理核心**：冻结的权威结构（北斗七星 + 四象 + 八仙护法）
+- **进程隔离**：基于 tmux 的多智能体真并行
+- **干净执行**：Git worktree 环境，确保无状态、可复现的运行
+- **生产账本化**：每次运行都被追踪、归档、可审计
 
-The 19 seats are **not decorative personas**. They are governance units with explicit authority boundaries.
-
-### Three Layers
-
-| Layer | Seats | Function |
-|-------|-------|----------|
-| **北斗七星**<br>Seven Northern Stars | 7 | Core governance (CEO/CTO/COO/CRO equivalents with separated powers) |
-| **四象**<br>Four Symbols | 4 | Campaign layer (exploration, verification, narrative, stability) |
-| **八仙护法**<br>Eight Guardians | 8 | Specialized functions (audit, quality, rapid deployment, termination) |
-
-**Key Constraint**: Execution departments can expand freely (司/局/台/阁). The 19-seat authority core remains frozen.
+**已验证机制：**
+- ✅ 否决 / 冲突解决 / 升级
+- ✅ 回滚 / 归档 / 终止
+- ✅ 真实外部输入处理
+- ✅ 17+ 生产轮次验证
 
 ---
 
-## Core Departments
+## 为什么是 19
 
-Seats hold authority. Departments execute.
+19 是**最小可治理核心**（Minimum Governable Core）。
 
-| Department | Function | Why Essential |
-|------------|----------|---------------|
-| Engineering | Implementation & delivery | Without it, nothing gets built |
-| Audit | Independent review & accountability | Without it, self-approval replaces governance |
-| Risk Control | Risk detection & gates | Without it, bad outputs travel too far |
-| Monitoring | Runtime visibility | Without it, failures discovered too late |
-| Platform | Orchestration & infrastructure | Without it, execution fragments |
-| Archives | Evidence preservation | Without it, no institutional memory |
+- **18 席**：权威塌缩（有人自我批准）
+- **20 席**：协调成本超过收益（仪式替代控制）
+- **19 席**：治理仍有可能的冻结阈值
 
----
+这 19 席**不是装饰性人格**。它们是具有明确权威边界的治理单元。
 
-## Production Status
+### 三层结构
 
-🟢 **Controlled Production** — Since RUN-011
+| 层级 | 席位 | 职能 |
+|------|------|------|
+| **北斗七星**<br>Seven Northern Stars | 7 | 核心治理（CEO/CTO/COO/CRO 等，权力分离） |
+| **四象**<br>Four Symbols | 4 | 战役层（探索、验证、叙事、稳定） |
+| **八仙护法**<br>Eight Guardians | 8 | 专项职能（审计、质量、快速部署、终止） |
 
-| Metric | Status |
-|--------|--------|
-| Stability runs | 17+ consecutive rounds without drift |
-| Veto exercised | ✅ Verified functional |
-| Rollback executed | ✅ Verified functional |
-| Archive system | ✅ Verified functional |
-| Termination protocol | ✅ Verified functional |
-
-Target: 100 runs for full reliability evidence pack.
+**关键约束**：执行部门可以自由扩展（司/局/台/阁）。19席权威核心保持冻结。
 
 ---
 
-## Governance Principles
+## 核心部门
 
-> **Authority must be explicit.**  
-> **Execution must not self-approve.**  
-> **Decisions must be traceable.**  
-> **Challenges must be formal, not rhetorical.**  
-> **Rollback must be executable.**  
-> **Archive must be indexable.**  
-> **Termination must be explicit.**  
-> **Production actions must be ledgered.**  
-> **Governance must be stronger than convenience.**
+席位持有权力，部门执行工作。
 
----
-
-## Further Reading
-
-| Document | Content |
-|----------|---------|
-| [`docs/19_SEATS.md`](docs/19_SEATS.md) | Complete 19-seat authority definitions, power drives, conflict network |
-| [`docs/HUAXIA_REGISTRY.md`](docs/HUAXIA_REGISTRY.md) | 30+ mythic/historical personas for secondary institutions |
-| [`docs/RUNTIME.md`](docs/RUNTIME.md) | Runtime architecture, process isolation, execution environment |
-| [`docs/PRODUCTION_STATUS.md`](docs/PRODUCTION_STATUS.md) | Production evidence, run ledger, stability metrics |
+| 部门 | 职能 | 为何必需 |
+|------|------|----------|
+| **工程部** | 实现与技术交付 | 没有它，什么也建不成 |
+| **审计部** | 独立审查与问责 | 没有它，自我批准取代治理 |
+| **风控部** | 风险检测与门禁 | 没有它，坏输出走得太远 |
+| **监控部** | 运行时可见性 | 没有它，失败发现得太晚 |
+| **平台部** | 编排与基础设施协调 | 没有它，执行碎片化 |
+| **档案部** | 证据保存 | 没有它，没有制度记忆 |
 
 ---
 
-## License
+## 生产状态
 
-MIT — We open source the governance framework.  
-The Huaxia civilizational metaphor is ours.
+🟢 **受控生产阶段** — 自 RUN-011 起
+
+| 指标 | 状态 |
+|------|------|
+| 稳定运行轮次 | 17+ 连续轮次，无漂移 |
+| 否决行使 | ✅ 功能已验证 |
+| 回滚执行 | ✅ 功能已验证 |
+| 归档系统 | ✅ 功能已验证 |
+| 终止协议 | ✅ 功能已验证 |
+
+目标：100 轮完整运行，形成可靠性证据包。
+
+---
+
+## 治理原则
+
+> **权力必须明确。**  
+> **执行不得自我批准。**  
+> **决策必须可追溯。**  
+> **挑战必须正式，不是修辞。**  
+> **回滚必须可执行。**  
+> **归档必须可索引。**  
+> **终止必须明确。**  
+> **生产行为必须账本化。**  
+> **治理必须强于便利。**
+
+---
+
+## 延伸阅读
+
+| 文档 | 内容 |
+|------|------|
+| [`docs/19_SEATS.md`](docs/19_SEATS.md) | 19席完整权威定义、权力驱动、冲突网络 |
+| [`docs/HUAXIA_REGISTRY.md`](docs/HUAXIA_REGISTRY.md) | 30+ 神话/历史人物，用于二级机构 |
+| [`docs/RUNTIME.md`](docs/RUNTIME.md) | 运行时架构、进程隔离、执行环境 |
+| [`docs/PRODUCTION_STATUS.md`](docs/PRODUCTION_STATUS.md) | 生产证据、运行账本、稳定性指标 |
+
+---
+
+## 许可证
+
+MIT — 我们开源治理框架。  
+华夏文明隐喻归我们所有。
 
 <div align="center">
 
-**True Dragon. Not Claw.**  
-**真龙，不是龙虾。**
+**真龙，不是龙虾。**  
+**True Dragon. Not Claw.**
 
 </div>
