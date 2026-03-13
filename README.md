@@ -284,6 +284,49 @@ DragonCore 从华夏文明治理中汲取灵感：
 
 ## 为什么是龙 / Why Dragon
 
+### 中英文命名差异 / The Cross-Lingual Naming Distinction
+
+在英文里，**lobster** 就只是 *lobster*。
+
+但在中文里，龙虾这个词写作 **龙虾**：
+- **龙** (lóng) = dragon
+- **虾** (xiā) = shrimp
+
+*In English, lobster is simply lobster. But in Chinese, lobster is written as 龙虾: 龙 = dragon, 虾 = shrimp.*
+
+这创造了一个在英文中**不存在**、但在中文里**立即成立**的区别。
+
+*That creates a distinction that does not exist naturally in English, but matters immediately in Chinese.*
+
+所以当 DragonCore 说 **真龙，不是龙虾**，或者英文 **Dragon, not Claw** 时，
+这不是文字游戏。这是一个**命名立场**。
+
+*So when DragonCore says "True Dragon, not Lobster" or "Dragon, not Claw", it is not just wordplay. It is a naming position.*
+
+DragonCore **不要**借龙之名做装饰、做表面品牌、做 borrowed symbolism。
+
+*DragonCore does not want the dragon as decoration, borrowed symbolism, or surface branding.*
+
+它要的是华夏文明意义上的**真龙**：
+- 有序的权威 / Ordered authority
+- 合法性 / Legitimacy  
+- 协调的力量 / Coordinated power
+- 跨时间的连续性 / Continuity across time
+- 强于即兴的治理 / Governance stronger than improvisation
+
+*It wants the dragon in the Chinese civilizational sense: ordered authority, legitimacy, coordinated power, continuity, governance stronger than improvisation.*
+
+**这就是区别。**
+
+*That is the difference.*
+
+龙虾可能在中文命名中借用**龙**字，
+但 DragonCore 是建立在龙**真正代表的东西**之上。
+
+*A lobster may borrow the character 龙 in Chinese naming. DragonCore is built around what the dragon actually represents.*
+
+### 龙作为模型 / The Dragon as Model
+
 在华夏文明中，龙不是随机吉祥物。
 它代表有序权力、合法性、适应性、连续性和协调代理。
 
@@ -291,10 +334,12 @@ DragonCore 从华夏文明治理中汲取灵感：
 
 这就是 DragonCore 使用龙作为其核心形象的原因。
 
+*That is why DragonCore uses the dragon as its central image.*
+
 它不是噪音的生物。
 它是受治理力量的象征。
 
-*That is why DragonCore uses the dragon as its central image. It is not a creature of noise. It is a symbol of governed force.*
+*It is not a creature of noise. It is a symbol of governed force.*
 
 DragonCore 不仅仅把龙用作表面品牌。
 它把龙当作模型：
