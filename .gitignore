@@ -1,0 +1,32 @@
+# Runs and artifacts
+runs/*/artifacts/
+runs/*/worktrees/
+*.log
+
+# API Keys and secrets
+.env
+.env.local
+*.key
+
+# Build artifacts
+target/
+build/
+dist/
+*.exe
+*.dll
+*.so
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
