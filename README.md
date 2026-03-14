@@ -54,6 +54,8 @@ DragonCore 是一个面向多智能体 AI 系统的生产级治理内核。
 - ✅ 真实外部输入处理
 - ✅ 17+ 生产轮次验证
 
+**运行时源代码**: [`runtime/`](runtime/) — 完整的 Rust 实现，干净的重新构建
+
 ---
 
 ## 与 OpenClaw 对比 | Comparison
@@ -159,9 +161,11 @@ DragonCore 是一个面向多智能体 AI 系统的生产级治理内核。
 
 | 文档 | 内容 |
 |------|------|
+| [`docs/USAGE_GUIDE.md`](docs/USAGE_GUIDE.md) | 完整使用指南、安装、配置、工作流 |
 | [`docs/19_SEATS.md`](docs/19_SEATS.md) | 19席完整权威定义、权力驱动、冲突网络 |
 | [`docs/HUAXIA_REGISTRY.md`](docs/HUAXIA_REGISTRY.md) | 30+ 神话/历史人物，用于二级机构 |
-| [`docs/RUNTIME.md`](docs/RUNTIME.md) | 运行时架构、进程隔离、执行环境 |
+| [`runtime/`](runtime/) | DragonCore 运行时源代码、构建指南 |
+| [`runtime/examples/`](runtime/examples/) | 治理场景示例、测试脚本 |
 | [`docs/PRODUCTION_STATUS.md`](docs/PRODUCTION_STATUS.md) | 生产证据、运行账本、稳定性指标 |
 
 ---

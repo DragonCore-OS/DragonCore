@@ -1,0 +1,23 @@
+[runtime]
+name = "dragoncore"
+version = "0.1.0"
+data_dir = "/home/admin/.local/share/runtime"
+log_level = "info"
+
+[governance]
+constitution_path = "/home/admin/.local/share/runtime/constitution"
+escalation_timeout = 300
+strict_mode = true
+
+[providers]
+
+[execution]
+tmux_prefix = "dragoncore"
+worktree_base = "/home/admin/.local/share/runtime/worktrees"
+max_concurrent_agents = 19
+isolation_enabled = true
+
+[ledger]
+storage_path = "/home/admin/.local/share/runtime/ledger"
+auto_archive_threshold = 100
+retention_days = 365

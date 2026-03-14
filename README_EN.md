@@ -53,6 +53,8 @@ DragonCore is a production-grade governance kernel for multi-agent AI systems.
 - ✅ Real external input handling
 - ✅ 17+ production rounds validated
 
+**Runtime Source**: [`runtime/`](runtime/) — Complete Rust implementation, clean-room rebuild
+
 ---
 
 ## Comparison with OpenClaw
@@ -158,9 +160,11 @@ Target: 100 runs for full reliability evidence pack.
 
 | Document | Content |
 |----------|---------|
+| [`docs/USAGE_GUIDE.md`](docs/USAGE_GUIDE.md) | Complete usage guide, installation, configuration, workflows |
 | [`docs/19_SEATS.md`](docs/19_SEATS.md) | Complete 19-seat authority definitions, power drives, conflict network |
 | [`docs/HUAXIA_REGISTRY.md`](docs/HUAXIA_REGISTRY.md) | 30+ mythic/historical personas for secondary institutions |
-| [`docs/RUNTIME.md`](docs/RUNTIME.md) | Runtime architecture, process isolation, execution environment |
+| [`runtime/`](runtime/) | DragonCore runtime source code, build guide |
+| [`runtime/examples/`](runtime/examples/) | Governance scenarios, test scripts |
 | [`docs/PRODUCTION_STATUS.md`](docs/PRODUCTION_STATUS.md) | Production evidence, run ledger, stability metrics |
 
 ---
