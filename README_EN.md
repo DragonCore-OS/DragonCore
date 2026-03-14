@@ -128,7 +128,7 @@ Seats hold authority. Departments execute.
 
 ## Development & Verification Status
 
-🟡 **v0.1.0 Skeleton Complete, Entering Runnable Verification Phase**
+DragonCore Runtime is structurally implemented, buildable, and partially runnable, but not yet operationally verified.
 
 | Component | Code Status | Runtime Verification | Documentation |
 |-----------|-------------|---------------------|---------------|
@@ -139,11 +139,13 @@ Seats hold authority. Departments execute.
 | Git Worktree Isolation | ✅ Implemented | ⏳ Pending | ✅ Complete |
 | CLI Interface | ✅ Implemented | ✅ Compiles | ✅ Complete |
 
-**Verification Report**: [`runtime/VERIFICATION_REPORT.md`](runtime/VERIFICATION_REPORT.md)  
-**Known Gaps**: [`runtime/KNOWN_GAPS.md`](runtime/KNOWN_GAPS.md)  
-**Smoke Tests**: [`runtime/SMOKE_TEST_RESULTS.md`](runtime/SMOKE_TEST_RESULTS.md)
+**Verification Documents**:
+- [`runtime/VERIFICATION_REPORT.md`](runtime/VERIFICATION_REPORT.md) - Detailed verification status
+- [`runtime/VERIFICATION_CHECKLIST.md`](runtime/VERIFICATION_CHECKLIST.md) - Verification checklist
+- [`runtime/KNOWN_GAPS.md`](runtime/KNOWN_GAPS.md) - Known gaps
+- [`runtime/SMOKE_TEST_RESULTS.md`](runtime/SMOKE_TEST_RESULTS.md) - Smoke test results
 
-**Next Steps**: After real task verification, mechanism validation, and isolation testing, enter production-grade testing.
+**DragonCore Runtime is not presented as production-ready. It is presented as an auditable implementation entering operational verification.**
 
 ---
 

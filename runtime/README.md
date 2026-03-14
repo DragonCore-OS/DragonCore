@@ -6,6 +6,24 @@ DragonCore Runtime is a **complete, clean-room implementation** of a governance-
 
 ---
 
+## Current Status | 当前状态
+
+**DragonCore Runtime is not presented as production-ready. It is presented as an auditable implementation entering operational verification.**
+
+DragonCore Runtime 不是作为生产就绪系统呈现的。它是作为一个正在进入运行验证阶段的可审计实现呈现的。
+
+| Phase | Status | Evidence |
+|-------|--------|----------|
+| Structural Implementation | ✅ Complete | All modules coded |
+| Compilation | ✅ Verified | Binary builds successfully |
+| CLI Interface | ✅ Verified | 13 commands functional |
+| Operational Verification | ⏳ In Progress | Pending real API testing |
+| Production Hardening | 🔴 Not Started | Requires verification completion |
+
+**Verification Documents**: [VERIFICATION_REPORT.md](VERIFICATION_REPORT.md) | [VERIFICATION_CHECKLIST.md](VERIFICATION_CHECKLIST.md) | [KNOWN_GAPS.md](KNOWN_GAPS.md)
+
+---
+
 ## Architecture | 架构
 
 ```

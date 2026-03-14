@@ -129,7 +129,7 @@ DragonCore 是一个面向多智能体 AI 系统的生产级治理内核。
 
 ## 开发与验证状态
 
-🟡 **v0.1.0 骨架完成，进入可运行性验证阶段**
+DragonCore Runtime 已完成结构实现，可编译、可进行部分静态运行，但尚未完成运行级验证。
 
 | 组件 | 代码状态 | 运行验证 | 文档 |
 |------|----------|----------|------|
@@ -140,11 +140,13 @@ DragonCore 是一个面向多智能体 AI 系统的生产级治理内核。
 | Git worktree 隔离 | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
 | CLI 接口 | ✅ 已实现 | ✅ 编译通过 | ✅ 完整 |
 
-**验证报告**: [`runtime/VERIFICATION_REPORT.md`](runtime/VERIFICATION_REPORT.md)  
-**已知缺陷**: [`runtime/KNOWN_GAPS.md`](runtime/KNOWN_GAPS.md)  
-**冒烟测试**: [`runtime/SMOKE_TEST_RESULTS.md`](runtime/SMOKE_TEST_RESULTS.md)
+**验证文档**:
+- [`runtime/VERIFICATION_REPORT.md`](runtime/VERIFICATION_REPORT.md) - 详细验证状态
+- [`runtime/VERIFICATION_CHECKLIST.md`](runtime/VERIFICATION_CHECKLIST.md) - 验证清单
+- [`runtime/KNOWN_GAPS.md`](runtime/KNOWN_GAPS.md) - 已知缺陷
+- [`runtime/SMOKE_TEST_RESULTS.md`](runtime/SMOKE_TEST_RESULTS.md) - 冒烟测试
 
-**下一步**: 在完成真实任务验证、机制闭环验证、隔离性验证后，进入生产级测试。
+**DragonCore Runtime is not presented as production-ready. It is presented as an auditable implementation entering operational verification.**
 
 ---
 
