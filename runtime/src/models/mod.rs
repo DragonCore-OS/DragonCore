@@ -5,6 +5,9 @@ use std::time::Duration;
 
 use crate::config::ProviderConfig;
 
+mod kimi_cli;
+pub use kimi_cli::KimiCliProvider;
+
 /// Model provider trait
 #[async_trait::async_trait]
 pub trait ModelProvider: Send + Sync {
@@ -49,11 +52,27 @@ impl KimiProvider {
             .build()
             .context("Failed to create HTTP client")?;
         
+        // Support both Kimi Code (api.kimi.com) and Moonshot (api.moonshot.cn)
+        let base_url = if config.base_url.contains("kimi.com") {
+            config.base_url.clone()
+        } else if config.base_url.contains("moonshot") {
+            config.base_url.clone()
+        } else {
+            // Default to Kimi Code endpoint
+            "https://api.kimi.com/coding/v1".to_string()
+        };
+        
+        let model = if config.model.is_empty() || config.model == "kimi-latest" {
+            "kimi-for-coding".to_string()
+        } else {
+            config.model.clone()
+        };
+        
         Ok(Self {
             client,
             api_key: config.api_key.clone(),
-            base_url: config.base_url.clone(),
-            model: config.model.clone(),
+            base_url,
+            model,
             timeout: Duration::from_secs(config.timeout),
         })
     }
@@ -357,6 +376,14 @@ struct QwenChoice {
 pub fn create_provider(name: &str, config: &ProviderConfig) -> Result<Box<dyn ModelProvider>> {
     match name {
         "kimi" => Ok(Box::new(KimiProvider::new(config)?)),
+        "kimi-cli" => {
+            // Use Kimi CLI for Kimi Code 699 membership keys
+            KimiCliProvider::check_cli()?;
+            Ok(Box::new(KimiCliProvider::new(
+                config.api_key.clone(),
+                config.timeout,
+            )))
+        }
         "deepseek" => Ok(Box::new(DeepSeekProvider::new(config)?)),
         "qwen" => Ok(Box::new(QwenProvider::new(config)?)),
         _ => anyhow::bail!("Unknown provider: {}", name),

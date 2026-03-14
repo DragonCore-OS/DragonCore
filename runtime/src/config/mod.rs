@@ -55,6 +55,7 @@ pub struct ProviderConfig {
 #[serde(rename_all = "snake_case")]
 pub enum ProviderType {
     Kimi,
+    KimiCli, // For Kimi Code 699 membership keys
     DeepSeek,
     Qwen,
 }
@@ -155,12 +156,21 @@ impl Config {
         
         // Add default providers if API keys exist
         if let Ok(api_key) = std::env::var("KIMI_API_KEY") {
+            // Detect if this is a Kimi Code key (kimi.com) vs Moonshot key
+            // Kimi Code keys start with "sk-kimi-" and work with CLI
+            let provider_type = if api_key.starts_with("sk-kimi-") {
+                // Use kimi-cli for Kimi Code 699 membership keys
+                ProviderType::KimiCli
+            } else {
+                ProviderType::Kimi
+            };
+            
             config.providers.insert("kimi".to_string(), ProviderConfig {
-                provider_type: ProviderType::Kimi,
+                provider_type,
                 api_key,
-                base_url: "https://api.moonshot.cn/v1".to_string(),
-                model: "kimi-latest".to_string(),
-                timeout: 60,
+                base_url: "https://api.kimi.com/coding/v1".to_string(),
+                model: "kimi-for-coding".to_string(),
+                timeout: 120, // CLI mode may take longer
             });
         }
         

@@ -42,10 +42,17 @@ impl DragonCoreRuntime {
         // Initialize model router
         let mut model_router = ModelRouter::new();
         for (name, provider_config) in &config.providers {
-            match crate::models::create_provider(name, provider_config) {
+            // Check if we should use kimi-cli for Kimi Code keys
+            let provider_name = if matches!(provider_config.provider_type, crate::config::ProviderType::KimiCli) {
+                "kimi-cli"
+            } else {
+                name.as_str()
+            };
+            
+            match crate::models::create_provider(provider_name, provider_config) {
                 Ok(provider) => {
                     model_router.add_provider(provider);
-                    tracing::info!("Added model provider: {}", name);
+                    tracing::info!("Added model provider: {} (type: {:?})", name, provider_config.provider_type);
                 }
                 Err(e) => {
                     tracing::warn!("Failed to create provider {}: {}", name, e);

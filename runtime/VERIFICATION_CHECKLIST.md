@@ -6,6 +6,21 @@
 
 ---
 
+## Status Upgrade Rules | 状态升级规则
+
+| Verified Count | Status Level | Description |
+|----------------|--------------|-------------|
+| 0/10 | 🔴 buildable skeleton | Code exists, compiles, CLI static commands work |
+| 1-5/10 | 🟡 single-path partially verified | Core governance chain executes with real API |
+| 6-9/10 | 🟢 operationally verified for tested path | Isolation, ledger, metrics all functional |
+| 10/10 | ✅ fully verified | All mechanisms tested and documented |
+
+**Current Status**: 🔴 buildable skeleton (0/10 verified)
+
+**Goal**: Reach 🟡 single-path partially verified (5/10) with minimal test run.
+
+---
+
 ## Verification Milestone 1: Single-Path Operational Verification
 
 **Goal**: Verify one complete governance chain works end-to-end.
