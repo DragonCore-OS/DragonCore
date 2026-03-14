@@ -126,19 +126,24 @@ Seats hold authority. Departments execute.
 
 ---
 
-## Production Status
+## Development & Verification Status
 
-🟢 **Controlled Production** — Since RUN-011
+🟡 **v0.1.0 Skeleton Complete, Entering Runnable Verification Phase**
 
-| Metric | Status |
-|--------|--------|
-| Stability runs | 17+ consecutive rounds without drift |
-| Veto exercised | ✅ Verified functional |
-| Rollback executed | ✅ Verified functional |
-| Archive system | ✅ Verified functional |
-| Termination protocol | ✅ Verified functional |
+| Component | Code Status | Runtime Verification | Documentation |
+|-----------|-------------|---------------------|---------------|
+| 19-Seat Governance | ✅ Implemented | ⏳ Pending | ✅ Complete |
+| Veto/Escalation/Termination | ✅ Implemented | ⏳ Pending | ✅ Complete |
+| Production Ledger | ✅ Implemented | ⏳ Pending | ✅ Complete |
+| tmux Process Isolation | ✅ Implemented | ⏳ Pending | ✅ Complete |
+| Git Worktree Isolation | ✅ Implemented | ⏳ Pending | ✅ Complete |
+| CLI Interface | ✅ Implemented | ✅ Compiles | ✅ Complete |
 
-Target: 100 runs for full reliability evidence pack.
+**Verification Report**: [`runtime/VERIFICATION_REPORT.md`](runtime/VERIFICATION_REPORT.md)  
+**Known Gaps**: [`runtime/KNOWN_GAPS.md`](runtime/KNOWN_GAPS.md)  
+**Smoke Tests**: [`runtime/SMOKE_TEST_RESULTS.md`](runtime/SMOKE_TEST_RESULTS.md)
+
+**Next Steps**: After real task verification, mechanism validation, and isolation testing, enter production-grade testing.
 
 ---
 
