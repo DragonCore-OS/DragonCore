@@ -7,6 +7,7 @@ mod config;
 mod governance;
 mod ledger;
 mod models;
+mod persistence;
 mod runtime;
 mod tmux;
 mod worktree;
@@ -188,8 +189,9 @@ async fn main() -> Result<()> {
         Commands::Run { run_id, input_type, task } => {
             let runtime = RuntimeBuilder::new().with_config(config).build().await?;
             let run_id = run_id.unwrap_or_else(|| generate_run_id());
+            let task_str = task.clone().unwrap_or_default();
             
-            let context = runtime.init_run(&run_id, input_type).await?;
+            let context = runtime.init_run(&run_id, input_type, task_str).await?;
             println!("Started governance run: {}", run_id);
             println!("Worktree: {:?}", context.worktree_path);
             
@@ -245,17 +247,19 @@ async fn main() -> Result<()> {
             let runtime = RuntimeBuilder::new().with_config(config).build().await?;
             
             if let Some(run_id) = run_id {
-                if let Some(state) = runtime.get_run_status(&run_id).await {
-                    println!("Run {}: {:?}", run_id, state);
-                } else {
-                    println!("Run {} not found", run_id);
+                match runtime.get_run_status(&run_id).await {
+                    Ok(Some(state)) => println!("Run {}: {:?}", run_id, state),
+                    Ok(None) => println!("Run {} not found", run_id),
+                    Err(e) => println!("Error getting run status: {}", e),
                 }
             } else {
                 let active = runtime.list_active_runs().await;
                 println!("Active runs: {}", active.len());
                 for run_id in active {
-                    if let Some(state) = runtime.get_run_status(&run_id).await {
-                        println!("  {}: {:?}", run_id, state);
+                    match runtime.get_run_status(&run_id).await {
+                        Ok(Some(state)) => println!("  {}: {:?}", run_id, state),
+                        Ok(None) => println!("  {}: not found", run_id),
+                        Err(e) => println!("  {}: error - {}", run_id, e),
                     }
                 }
             }

@@ -128,24 +128,42 @@ Seats hold authority. Departments execute.
 
 ## Development & Verification Status
 
-DragonCore Runtime is structurally implemented, buildable, and partially runnable, but not yet operationally verified.
+**DragonCore Runtime v0.2.1 has verified the first complete single-node JSON-backed governance path end to end.**
 
-| Component | Code Status | Runtime Verification | Documentation |
-|-----------|-------------|---------------------|---------------|
-| 19-Seat Governance | ✅ Implemented | ⏳ Pending | ✅ Complete |
-| Veto/Escalation/Termination | ✅ Implemented | ⏳ Pending | ✅ Complete |
-| Production Ledger | ✅ Implemented | ⏳ Pending | ✅ Complete |
-| tmux Process Isolation | ✅ Implemented | ⏳ Pending | ✅ Complete |
-| Git Worktree Isolation | ✅ Implemented | ⏳ Pending | ✅ Complete |
-| CLI Interface | ✅ Implemented | ✅ Compiles | ✅ Complete |
+### v0.2.1 Verification Complete (10/10)
+
+| Check | Status | Evidence |
+|-------|--------|----------|
+| RV-001: Single-path execution | ✅ Verified | Tianquan API call succeeded |
+| RV-002: Tmux window isolation | ✅ Verified | 19-seat independent sessions |
+| RV-003: Worktree creation | ✅ Verified | Git worktree isolation |
+| RV-004: Veto execution | ✅ Verified | Cross-CLI state continuity |
+| RV-005: Ledger auto-write | ✅ Verified | CSV immediate write |
+| RV-006: Termination | ✅ Verified | State persisted |
+| RV-007: Archive | ✅ Verified | State change recorded |
+| RV-008: Final gate | ✅ Verified | Cross-CLI loading |
+| RV-009: Worktree cleanup | ✅ Verified | Tmux cleanup completed |
+| RV-010: Metrics accuracy | ✅ Verified | Ledger correctly reflected |
+
+**Verification Conclusion**: 10/10 complete | Single-node JSON path verified | Operational system
+
+**Core Evidence**:
+```bash
+# Cross-CLI state continuity proven
+$ dragoncore run --run-id test ...
+$ dragoncore veto --run-id test --seat Yuheng ...
+[INFO] Loaded 1 runs from persistent storage  # ← State found
+$ dragoncore final-gate --run-id test --approve
+$ dragoncore metrics
+Total runs: 1  # ← Metrics correct
+```
 
 **Verification Documents**:
-- [`runtime/VERIFICATION_REPORT.md`](runtime/VERIFICATION_REPORT.md) - Detailed verification status
-- [`runtime/VERIFICATION_CHECKLIST.md`](runtime/VERIFICATION_CHECKLIST.md) - Verification checklist
-- [`runtime/KNOWN_GAPS.md`](runtime/KNOWN_GAPS.md) - Known gaps
-- [`runtime/SMOKE_TEST_RESULTS.md`](runtime/SMOKE_TEST_RESULTS.md) - Smoke test results
+- [`runtime/STATUS.md`](runtime/STATUS.md) - v0.2.1 complete status
+- [`runtime/RELEASE_NOTES_v0.2.1.md`](runtime/RELEASE_NOTES_v0.2.1.md) - Release notes
+- [`runtime/docs/VERIFICATION_REPORT.md`](runtime/docs/VERIFICATION_REPORT.md) - Detailed evidence
 
-**DragonCore Runtime is not presented as production-ready. It is presented as an auditable implementation entering operational verification.**
+**DragonCore Runtime is operationally verified for the single-node JSON-backed path.**
 
 ---
 

@@ -1,28 +1,22 @@
 use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use crate::persistence::{PersistedRun, PersistedRunStatus, RunEvent, RunMetrics, RunStore, VetoRecord};
 
 /// Governance authority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Authority {
-    /// Can recommend, no binding power
     Suggest,
-    /// Can examine and comment
     Review,
-    /// Can block with documented reason
     Veto,
-    /// Can authorize passage
     Approve,
-    /// Can implement directly
     Execute,
-    /// Can orchestrate execution
     Orchestrate,
-    /// Ultimate decision, no appeal
     FinalGate,
-    /// Can preserve to institutional memory
     Archive,
-    /// Can end permanently
     Terminate,
 }
 
@@ -30,34 +24,12 @@ pub enum Authority {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Seat {
-    // 北斗七星 - Seven Northern Stars
-    Tianshu,    // CEO / Final Arbiter
-    Tianxuan,   // COO / Risk Guardian
-    Tianji,     // CTO / Technical Lead
-    Tianquan,   // CSO / Strategy Definition
-    Yuheng,     // CRO / Quality Gate
-    Kaiyang,    // Implementation Review
-    Yaoguang,   // Innovation & Archive
-    
-    // 四象 - Four Symbols
-    Qinglong,   // East - New Track Exploration
-    Baihu,      // West - Red Team / Stress Test
-    Zhuque,     // South - External Narrative
-    Xuanwu,     // North - Stability Assurance
-    
-    // 八仙护法 - Eight Guardian Immortals
-    Yangjian,   // Quality Inspection
-    Baozheng,   // Independent Audit
-    Zhongkui,   // Anomaly Purge
-    Luban,      // Engineering Platform
-    Zhugeliang, // Chief Advisor
-    Nezha,      // Rapid Deployment
-    Xiwangmu,   // Scarce Resources
-    Fengdudadi, // Termination & Archive
+    Tianshu, Tianxuan, Tianji, Tianquan, Yuheng, Kaiyang, Yaoguang,
+    Qinglong, Baihu, Zhuque, Xuanwu,
+    Yangjian, Baozheng, Zhongkui, Luban, Zhugeliang, Nezha, Xiwangmu, Fengdudadi,
 }
 
 impl Seat {
-    /// Get the layer this seat belongs to
     pub fn layer(&self) -> Layer {
         match self {
             Seat::Tianshu | Seat::Tianxuan | Seat::Tianji | 
@@ -68,32 +40,18 @@ impl Seat {
         }
     }
     
-    /// Get the Chinese name for this seat
     pub fn chinese_name(&self) -> &'static str {
         match self {
-            Seat::Tianshu => "天枢",
-            Seat::Tianxuan => "天璇",
-            Seat::Tianji => "天玑",
-            Seat::Tianquan => "天权",
-            Seat::Yuheng => "玉衡",
-            Seat::Kaiyang => "开阳",
-            Seat::Yaoguang => "瑶光",
-            Seat::Qinglong => "青龙",
-            Seat::Baihu => "白虎",
-            Seat::Zhuque => "朱雀",
-            Seat::Xuanwu => "玄武",
-            Seat::Yangjian => "杨戬",
-            Seat::Baozheng => "包拯",
-            Seat::Zhongkui => "钟馗",
-            Seat::Luban => "鲁班",
-            Seat::Zhugeliang => "诸葛亮",
-            Seat::Nezha => "哪吒",
-            Seat::Xiwangmu => "西王母",
+            Seat::Tianshu => "天枢", Seat::Tianxuan => "天璇", Seat::Tianji => "天玑",
+            Seat::Tianquan => "天权", Seat::Yuheng => "玉衡", Seat::Kaiyang => "开阳",
+            Seat::Yaoguang => "瑶光", Seat::Qinglong => "青龙", Seat::Baihu => "白虎",
+            Seat::Zhuque => "朱雀", Seat::Xuanwu => "玄武", Seat::Yangjian => "杨戬",
+            Seat::Baozheng => "包拯", Seat::Zhongkui => "钟馗", Seat::Luban => "鲁班",
+            Seat::Zhugeliang => "诸葛亮", Seat::Nezha => "哪吒", Seat::Xiwangmu => "西王母",
             Seat::Fengdudadi => "丰都大帝",
         }
     }
     
-    /// Get the role description for this seat
     pub fn role(&self) -> &'static str {
         match self {
             Seat::Tianshu => "CEO / Final Arbiter",
@@ -118,7 +76,6 @@ impl Seat {
         }
     }
     
-    /// Get authorities for this seat
     pub fn authorities(&self) -> Vec<Authority> {
         match self {
             Seat::Tianshu => vec![Authority::Approve, Authority::Veto, Authority::FinalGate],
@@ -143,19 +100,15 @@ impl Seat {
         }
     }
     
-    /// Check if this seat has a specific authority
     pub fn has_authority(&self, authority: Authority) -> bool {
         self.authorities().contains(&authority)
     }
 }
 
-/// Governance layers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Layer {
-    SevenStars,      // 北斗七星
-    FourSymbols,     // 四象
-    EightImmortals,  // 八仙护法
+    SevenStars, FourSymbols, EightImmortals,
 }
 
 impl Layer {
@@ -168,178 +121,238 @@ impl Layer {
     }
 }
 
-/// Governance run state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RunState {
-    Pending,
-    InProgress,
-    Reviewing,
-    Escalated,
-    Approved,
-    Rejected,
-    RolledBack,
-    Archived,
-    Terminated,
+    Pending, InProgress, Reviewing, Escalated,
+    Approved, Rejected, RolledBack, Archived, Terminated,
 }
 
-/// A governance run
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GovernanceRun {
-    pub run_id: String,
-    pub state: RunState,
-    pub seats: HashMap<Seat, SeatState>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub updated_at: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SeatState {
-    pub status: SeatStatus,
-    pub outputs: Vec<String>,
-    pub veto_reason: Option<String>,
-    pub approved_at: Option<chrono::DateTime<chrono::Utc>>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum SeatStatus {
-    Waiting,
-    Active,
-    Completed,
-    Vetoed,
-    Escalated,
-}
-
-/// Governance engine
+/// Governance engine with durable persistence
+/// 
+/// Core rule: Every state transition = memory update + durable write
 pub struct GovernanceEngine {
-    runs: HashMap<String, GovernanceRun>,
+    cache: HashMap<String, PersistedRun>,
+    store: Box<dyn RunStore>,
 }
 
 impl GovernanceEngine {
-    pub fn new() -> Self {
-        Self {
-            runs: HashMap::new(),
+    /// Create new engine, loading all runs from persistent storage
+    pub fn new(store: Box<dyn RunStore>) -> Result<Self> {
+        let runs = store.load_all_runs()
+            .context("Failed to load runs from storage")?;
+        
+        tracing::info!("Loaded {} runs from persistent storage", runs.len());
+        
+        Ok(Self { cache: runs, store })
+    }
+    
+    /// Create a new governance run with persistence
+    pub fn create_run(&mut self, run_id: String, task: String, input_type: String, 
+                      worktree_path: std::path::PathBuf, tmux_session: String) -> Result<&PersistedRun> {
+        let run = PersistedRun::new(
+            run_id.clone(),
+            task,
+            input_type,
+            worktree_path,
+            tmux_session,
+        );
+        
+        // Persist FIRST (source of truth)
+        self.store.create_run(&run)
+            .with_context(|| format!("Failed to persist run {}", run_id))?;
+        
+        // Then update cache
+        self.cache.insert(run_id.clone(), run);
+        
+        self.cache.get(&run_id)
+            .context("Run was just inserted but not found in cache")
+    }
+    
+    /// Get run by ID - loads from storage if not in cache
+    pub fn get_run(&mut self, run_id: &str) -> Result<&PersistedRun> {
+        use std::collections::hash_map::Entry;
+        
+        match self.cache.entry(run_id.to_string()) {
+            Entry::Occupied(entry) => Ok(entry.into_mut()),
+            Entry::Vacant(entry) => {
+                // Load from storage
+                let run = self.store.load_run(run_id)
+                    .with_context(|| format!("Failed to load run {}", run_id))?
+                    .ok_or_else(|| anyhow::anyhow!("Run {} not found in storage", run_id))?;
+                Ok(entry.insert(run))
+            }
         }
     }
     
-    /// Create a new governance run
-    pub fn create_run(&mut self, run_id: String) -> Result<&GovernanceRun> {
-        let now = chrono::Utc::now();
-        
-        let mut seats = HashMap::new();
-        for seat in all_seats() {
-            seats.insert(seat, SeatState {
-                status: SeatStatus::Waiting,
-                outputs: Vec::new(),
-                veto_reason: None,
-                approved_at: None,
-            });
+    /// Get mutable reference to run - requires reload from storage
+    pub fn get_run_mut(&mut self, run_id: &str) -> Result<&mut PersistedRun> {
+        // Ensure it's in cache
+        if !self.cache.contains_key(run_id) {
+            let run = self.store.load_run(run_id)
+                .with_context(|| format!("Failed to load run {}", run_id))?
+                .ok_or_else(|| anyhow::anyhow!("Run {} not found in storage", run_id))?;
+            self.cache.insert(run_id.to_string(), run);
         }
         
-        let run = GovernanceRun {
-            run_id: run_id.clone(),
-            state: RunState::Pending,
-            seats,
-            created_at: now,
-            updated_at: now,
-        };
-        
-        self.runs.insert(run_id.clone(), run);
-        
-        self.runs.get(&run_id)
-            .context("Run was just inserted but not found")
+        self.cache.get_mut(run_id)
+            .context("Run not found in cache")
     }
     
-    /// Get a run by ID
-    pub fn get_run(&self, run_id: &str) -> Option<&GovernanceRun> {
-        self.runs.get(run_id)
+    /// Save run state to persistent storage
+    fn persist_run(&self, run: &PersistedRun) -> Result<()> {
+        self.store.save_run(run)
+            .with_context(|| format!("Failed to persist run {}", run.run_id))
     }
     
-    /// Get mutable reference to a run
-    pub fn get_run_mut(&mut self, run_id: &str) -> Option<&mut GovernanceRun> {
-        self.runs.get_mut(run_id)
-    }
-    
-    /// Check if a seat can exercise veto
-    pub fn can_veto(&self, run_id: &str, seat: Seat) -> Result<bool> {
-        let run = self.get_run(run_id)
-            .context("Run not found")?;
+    /// Record seat participation with persistence
+    pub fn record_participation(&mut self, run_id: &str, seat: Seat) -> Result<()> {
+        let run = self.get_run_mut(run_id)?;
         
-        Ok(seat.has_authority(Authority::Veto) && 
-           run.state == RunState::Reviewing)
+        let seat_str = format!("{:?}", seat);
+        if !run.seats_participated.contains(&seat_str) {
+            run.seats_participated.push(seat_str);
+        }
+        
+        run.add_event(seat, "participate", None);
+        
+        // Persist
+        let run_clone = run.clone();
+        self.persist_run(&run_clone)?;
+        
+        Ok(())
     }
     
-    /// Exercise veto
-    pub fn exercise_veto(&mut self, run_id: &str, seat: Seat, reason: String) -> Result<()> {
-        let run = self.get_run_mut(run_id)
-            .context("Run not found")?;
+    /// Execute seat action with persistence
+    pub fn execute_seat(&mut self, run_id: &str, seat: Seat, output: &str) -> Result<()> {
+        let run = self.get_run_mut(run_id)?;
         
+        run.current_seat = Some(format!("{:?}", seat));
+        run.add_event(seat, "execute", Some(&format!("output length: {} chars", output.len())));
+        run.artifacts.push(format!("{:?}_output.md", seat).to_lowercase());
+        
+        // Persist
+        let run_clone = run.clone();
+        self.persist_run(&run_clone)?;
+        
+        Ok(())
+    }
+    
+    /// Exercise veto - returns modified run for persistence by caller
+    pub fn exercise_veto(&mut self, run_id: &str, seat: Seat, reason: String) -> Result<&PersistedRun> {
+        // Check authority
         if !seat.has_authority(Authority::Veto) {
             anyhow::bail!("Seat {:?} does not have veto authority", seat);
         }
         
-        let seat_state = run.seats.get_mut(&seat)
-            .context("Seat not found in run")?;
+        let run = self.get_run_mut(run_id)?;
         
-        seat_state.status = SeatStatus::Vetoed;
-        seat_state.veto_reason = Some(reason);
+        // Update state
+        run.status = PersistedRunStatus::Vetoed;
+        run.veto = Some(VetoRecord {
+            seat: format!("{:?}", seat),
+            reason: reason.clone(),
+            timestamp: Utc::now(),
+        });
+        run.add_event(seat, "veto", Some(&reason));
         
-        run.state = RunState::Rejected;
-        run.updated_at = chrono::Utc::now();
+        let run_id_owned = run.run_id.clone();
+        tracing::info!("Veto exercised by {:?} on run {}: {}", seat, run_id_owned, reason);
         
-        Ok(())
+        self.cache.get(&run_id_owned)
+            .context("Run was just modified but not found in cache")
     }
     
-    /// Execute final gate (Tianshu only)
-    pub fn final_gate(&mut self, run_id: &str, approve: bool) -> Result<()> {
-        let run = self.get_run_mut(run_id)
-            .context("Run not found")?;
-        
-        if approve {
-            run.state = RunState::Approved;
-        } else {
-            run.state = RunState::Rejected;
+    /// Execute final gate - returns modified run for persistence by caller
+    pub fn final_gate(&mut self, run_id: &str, seat: Seat, approve: bool) -> Result<&PersistedRun> {
+        // Check authority (only Tianshu)
+        if seat != Seat::Tianshu {
+            anyhow::bail!("Only Tianshu can execute final gate");
         }
         
-        run.updated_at = chrono::Utc::now();
+        let run = self.get_run_mut(run_id)?;
         
-        Ok(())
+        // Update state
+        run.status = if approve { PersistedRunStatus::Approved } else { PersistedRunStatus::Rejected };
+        run.final_gate = Some(crate::persistence::FinalGateRecord {
+            seat: format!("{:?}", seat),
+            approved: approve,
+            timestamp: Utc::now(),
+        });
+        run.add_event(seat, "final_gate", Some(&format!("approved: {}", approve)));
+        
+        let run_id_owned = run.run_id.clone();
+        tracing::info!("Final gate executed for run {}: {}", run_id_owned, 
+            if approve { "APPROVED" } else { "REJECTED" });
+        
+        self.cache.get(&run_id_owned)
+            .context("Run was just modified but not found in cache")
     }
     
-    /// Archive a run (Yaoguang or Fengdudadi)
-    pub fn archive_run(&mut self, run_id: &str, seat: Seat) -> Result<()> {
+    /// Archive run - returns modified run for persistence by caller
+    pub fn archive_run(&mut self, run_id: &str, seat: Seat) -> Result<&PersistedRun> {
+        // Check authority
         if !seat.has_authority(Authority::Archive) {
             anyhow::bail!("Seat {:?} does not have archive authority", seat);
         }
         
-        let run = self.get_run_mut(run_id)
-            .context("Run not found")?;
+        let run = self.get_run_mut(run_id)?;
         
-        run.state = RunState::Archived;
-        run.updated_at = chrono::Utc::now();
+        run.status = PersistedRunStatus::Archived;
+        run.add_event(seat, "archive", None);
         
-        Ok(())
+        let run_id_owned = run.run_id.clone();
+        tracing::info!("Run {} archived by {:?}", run_id_owned, seat);
+        
+        self.cache.get(&run_id_owned)
+            .context("Run was just modified but not found in cache")
     }
     
-    /// Terminate a run (Fengdudadi or Zhongkui)
-    pub fn terminate_run(&mut self, run_id: &str, seat: Seat, reason: String) -> Result<()> {
+    /// Terminate run - returns modified run for persistence by caller
+    pub fn terminate_run(&mut self, run_id: &str, seat: Seat, reason: String) -> Result<&PersistedRun> {
+        // Check authority
         if !seat.has_authority(Authority::Terminate) {
             anyhow::bail!("Seat {:?} does not have terminate authority", seat);
         }
         
-        let run = self.get_run_mut(run_id)
-            .context("Run not found")?;
+        let run = self.get_run_mut(run_id)?;
         
-        run.state = RunState::Terminated;
-        run.updated_at = chrono::Utc::now();
+        run.status = PersistedRunStatus::Terminated;
+        run.add_event(seat, "terminate", Some(&reason));
         
-        // Record termination reason in Yaoguang's outputs
-        if let Some(yaoguang) = run.seats.get_mut(&Seat::Yaoguang) {
-            yaoguang.outputs.push(format!("Termination by {:?}: {}", seat, reason));
+        let run_id_owned = run.run_id.clone();
+        tracing::info!("Run {} terminated by {:?}: {}", run_id_owned, seat, reason);
+        
+        self.cache.get(&run_id_owned)
+            .context("Run was just modified but not found in cache")
+    }
+    
+    /// List all runs from cache (which is loaded from storage)
+    pub fn list_runs(&self) -> Vec<&PersistedRun> {
+        self.cache.values().collect()
+    }
+    
+    /// List active runs
+    pub fn list_active_runs(&self) -> Vec<&PersistedRun> {
+        self.cache.values()
+            .filter(|r| matches!(r.status, 
+                PersistedRunStatus::Created | 
+                PersistedRunStatus::Running
+            ))
+            .collect()
+    }
+    
+    /// Get run status
+    pub fn get_run_status(&self, run_id: &str) -> Option<PersistedRunStatus> {
+        self.cache.get(run_id).map(|r| r.status.clone())
+    }
+    
+    /// Check if run exists
+    pub fn run_exists(&self, run_id: &str) -> bool {
+        if self.cache.contains_key(run_id) {
+            return true;
         }
-        
-        Ok(())
+        self.store.run_exists(run_id).unwrap_or(false)
     }
 }
 

@@ -8,6 +8,7 @@ use crate::config::Config;
 use crate::governance::{GovernanceEngine, RunState, Seat};
 use crate::ledger::{Ledger, StabilityMetrics};
 use crate::models::{Message, ModelRouter, Role};
+use crate::persistence::{JsonFileStore, RunStore};
 use crate::tmux::{create_governance_session, TmuxManager};
 use crate::worktree::{RunContext, WorktreeManager};
 
@@ -16,6 +17,7 @@ pub struct DragonCoreRuntime {
     config: Config,
     governance: Arc<RwLock<GovernanceEngine>>,
     ledger: Arc<RwLock<Ledger>>,
+    store: Arc<JsonFileStore>,
     tmux: TmuxManager,
     worktree: WorktreeManager,
     model_router: Arc<RwLock<ModelRouter>>,
@@ -25,6 +27,16 @@ pub struct DragonCoreRuntime {
 impl DragonCoreRuntime {
     /// Create a new runtime instance
     pub async fn new(config: Config) -> Result<Self> {
+        // Initialize persistence store
+        let storage_path = config.execution.worktree_base.join("../runtime_state/runs");
+        let store = Arc::new(JsonFileStore::new(&storage_path)?);
+        tracing::info!("Initialized persistence store at: {:?}", storage_path);
+        
+        // Initialize governance engine with store
+        let store_clone: Box<dyn crate::persistence::RunStore> = Box::new(JsonFileStore::new(&storage_path)?);
+        let governance = GovernanceEngine::new(store_clone)?;
+        tracing::info!("Loaded {} runs from persistence", governance.list_runs().len());
+        
         // Initialize ledger
         let ledger = Ledger::new(&config.ledger.storage_path)?;
         
@@ -62,8 +74,9 @@ impl DragonCoreRuntime {
         
         Ok(Self {
             config,
-            governance: Arc::new(RwLock::new(GovernanceEngine::new())),
+            governance: Arc::new(RwLock::new(governance)),
             ledger: Arc::new(RwLock::new(ledger)),
+            store,
             tmux,
             worktree,
             model_router: Arc::new(RwLock::new(model_router)),
@@ -72,27 +85,38 @@ impl DragonCoreRuntime {
     }
     
     /// Initialize a new governance run
-    pub async fn init_run(&self, run_id: impl Into<String>, input_type: impl Into<String>) -> Result<RunContext> {
+    pub async fn init_run(&self, run_id: impl Into<String>, input_type: impl Into<String>, task: impl Into<String>) -> Result<RunContext> {
         let run_id = run_id.into();
         let input_type = input_type.into();
+        let task = task.into();
         
         tracing::info!("Initializing governance run: {}", run_id);
         
-        // Create governance run
-        {
-            let mut gov = self.governance.write().await;
-            gov.create_run(run_id.clone())?;
-        }
-        
-        // Start ledger
+        // Start ledger first (persist immediately)
         {
             let mut ledger = self.ledger.write().await;
-            ledger.start_run(&run_id, &input_type);
+            ledger.start_run(&run_id, &input_type)?;
         }
         
-        // Create worktree
+        // Create worktree and get paths
         let worktree_path = self.worktree.create_worktree_from_head(&run_id)?;
         let commit_hash = self.worktree.get_commit_hash(&run_id)?;
+        let tmux_session = format!("dragoncore_{}", run_id);
+        
+        // Create governance run with all required info
+        {
+            let mut gov = self.governance.write().await;
+            let run_state = gov.create_run(
+                run_id.clone(),
+                task,
+                input_type,
+                worktree_path.clone(),
+                tmux_session,
+            )?;
+            
+            // Persist run state immediately
+            self.store.save_run(run_state)?;
+        }
         
         // Create run context
         let context = RunContext {
@@ -118,12 +142,13 @@ impl DragonCoreRuntime {
     
     /// Execute a seat's role in a run
     pub async fn execute_seat(&self, run_id: &str, seat: Seat, task: &str) -> Result<String> {
-        let run_id = run_id.to_string();
+        let run_id_owned = run_id.to_string();
         
         // Record participation
         {
             let mut ledger = self.ledger.write().await;
-            ledger.record_participation(seat)?;
+            ledger.load_run(run_id);
+            ledger.record_participation(run_id, seat)?;
         }
         
         // Get system prompt for this seat
@@ -146,7 +171,7 @@ impl DragonCoreRuntime {
         let response = router.chat(messages).await?;
         
         // Store output in worktree
-        if let Some(context) = self.active_runs.read().await.get(&run_id) {
+        if let Some(context) = self.active_runs.read().await.get(run_id) {
             let output_file = format!("{:?}_output.md", seat).to_lowercase();
             context.write_artifact(&output_file, &response)?;
         }
@@ -162,16 +187,18 @@ impl DragonCoreRuntime {
             anyhow::bail!("Seat {:?} does not have veto authority", seat);
         }
         
-        // Exercise veto in governance engine
+        // Exercise veto in governance engine and persist
         {
             let mut gov = self.governance.write().await;
-            gov.exercise_veto(run_id, seat, reason.to_string())?;
+            let run = gov.exercise_veto(run_id, seat, reason.to_string())?;
+            self.store.save_run(&run)?;
         }
         
-        // Record in ledger
+        // Record in ledger (load first for cross-CLI continuity)
         {
             let mut ledger = self.ledger.write().await;
-            ledger.record_veto(seat)?;
+            ledger.load_run(run_id);
+            ledger.record_veto(run_id, seat)?;
         }
         
         tracing::info!("Veto exercised by {:?} on run {}: {}", seat, run_id, reason);
@@ -180,17 +207,19 @@ impl DragonCoreRuntime {
     
     /// Execute final gate (Tianshu only)
     pub async fn final_gate(&self, run_id: &str, approve: bool) -> Result<()> {
-        // Execute final gate
+        // Execute final gate and persist
         {
             let mut gov = self.governance.write().await;
-            gov.final_gate(run_id, approve)?;
+            let run = gov.final_gate(run_id, crate::governance::Seat::Tianshu, approve)?;
+            self.store.save_run(&run)?;
         }
         
-        // Finalize ledger
+        // Finalize ledger (load first for cross-CLI continuity)
         {
             let mut ledger = self.ledger.write().await;
-            let final_state = if approve { RunState::Approved } else { RunState::Rejected };
-            ledger.finalize_run(final_state)?;
+            ledger.load_run(run_id);
+            let final_state = if approve { crate::governance::RunState::Approved } else { crate::governance::RunState::Rejected };
+            ledger.finalize_run(run_id, final_state)?;
         }
         
         tracing::info!("Final gate executed for run {}: {}", run_id, if approve { "APPROVED" } else { "REJECTED" });
@@ -199,17 +228,19 @@ impl DragonCoreRuntime {
     
     /// Archive a run
     pub async fn archive_run(&self, run_id: &str, seat: Seat) -> Result<()> {
-        // Archive in governance engine
+        // Archive in governance engine and persist
         {
             let mut gov = self.governance.write().await;
-            gov.archive_run(run_id, seat)?;
+            let run = gov.archive_run(run_id, seat)?;
+            self.store.save_run(&run)?;
         }
         
-        // Record in ledger
+        // Record in ledger (load first for cross-CLI continuity)
         {
             let mut ledger = self.ledger.write().await;
-            ledger.record_archive()?;
-            ledger.finalize_run(RunState::Archived)?;
+            ledger.load_run(run_id);
+            ledger.record_archive(run_id)?;
+            ledger.finalize_run(run_id, crate::governance::RunState::Archived)?;
         }
         
         // Remove from active runs
@@ -224,17 +255,19 @@ impl DragonCoreRuntime {
     
     /// Terminate a run
     pub async fn terminate_run(&self, run_id: &str, seat: Seat, reason: &str) -> Result<()> {
-        // Terminate in governance engine
+        // Terminate in governance engine and persist
         {
             let mut gov = self.governance.write().await;
-            gov.terminate_run(run_id, seat, reason.to_string())?;
+            let run = gov.terminate_run(run_id, seat, reason.to_string())?;
+            self.store.save_run(&run)?;
         }
         
-        // Record in ledger
+        // Record in ledger (load first for cross-CLI continuity)
         {
             let mut ledger = self.ledger.write().await;
-            ledger.record_terminate()?;
-            ledger.finalize_run(RunState::Terminated)?;
+            ledger.load_run(run_id);
+            ledger.record_terminate(run_id)?;
+            ledger.finalize_run(run_id, crate::governance::RunState::Terminated)?;
         }
         
         // Remove from active runs
@@ -253,9 +286,12 @@ impl DragonCoreRuntime {
     }
     
     /// Get run status
-    pub async fn get_run_status(&self, run_id: &str) -> Option<RunState> {
-        let gov = self.governance.read().await;
-        gov.get_run(run_id).map(|r| r.state)
+    pub async fn get_run_status(&self, run_id: &str) -> Result<Option<crate::persistence::PersistedRunStatus>> {
+        let mut gov = self.governance.write().await;
+        match gov.get_run(run_id) {
+            Ok(run) => Ok(Some(run.status.clone())),
+            Err(_) => Ok(None),
+        }
     }
     
     /// Get stability metrics

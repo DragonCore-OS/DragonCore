@@ -47,12 +47,13 @@ impl WorktreeManager {
             self.remove_worktree(run_id)?;
         }
         
-        // Create worktree
+        // Create worktree (use -f to force override any stale registrations)
         let output = Command::new("git")
             .current_dir(&self.main_repo)
             .args(&[
                 "worktree",
                 "add",
+                "-f",
                 worktree_path.to_str().unwrap(),
                 branch,
             ])
@@ -97,12 +98,13 @@ impl WorktreeManager {
         
         let head = String::from_utf8_lossy(&head_output.stdout).trim().to_string();
         
-        // Create worktree from HEAD
+        // Create worktree from HEAD (use -f to force override any stale registrations)
         let output = Command::new("git")
             .current_dir(&self.main_repo)
             .args(&[
                 "worktree",
                 "add",
+                "-f",
                 "--detach",
                 worktree_path.to_str().unwrap(),
                 &head,

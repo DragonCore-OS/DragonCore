@@ -45,6 +45,9 @@ uuid = { version = "1.11", features = ["v4", "serde"] }
 # Process management
 sysinfo = "0.33"
 
+[dev-dependencies]
+tempfile = "3.14"
+
 [profile.release]
 opt-level = 3
 lto = true

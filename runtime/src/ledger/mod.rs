@@ -27,6 +27,7 @@ pub struct LedgerEntry {
     pub wall_clock_seconds: u64,
     pub human_intervention: bool,
     pub metadata: HashMap<String, String>,
+    pub finalized: bool,
 }
 
 impl LedgerEntry {
@@ -49,13 +50,14 @@ impl LedgerEntry {
             wall_clock_seconds: 0,
             human_intervention: false,
             metadata: HashMap::new(),
+            finalized: false,
         }
     }
     
     /// Serialize to CSV row
     pub fn to_csv_row(&self) -> String {
         format!(
-            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+            "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
             self.run_id,
             self.timestamp.to_rfc3339(),
             self.input_type,
@@ -71,48 +73,21 @@ impl LedgerEntry {
             self.tokens_used,
             self.wall_clock_seconds,
             self.human_intervention,
+            self.finalized,
         )
-    }
-    
-    /// Deserialize from CSV row
-    pub fn from_csv_row(row: &str) -> Result<Self> {
-        let parts: Vec<&str> = row.split(',').collect();
-        if parts.len() < 15 {
-            anyhow::bail!("Invalid CSV row: insufficient columns");
-        }
-        
-        Ok(Self {
-            run_id: parts[0].to_string(),
-            timestamp: DateTime::parse_from_rfc3339(parts[1])
-                .map_err(|e| anyhow::anyhow!("Failed to parse timestamp: {}", e))?
-                .into(),
-            input_type: parts[2].to_string(),
-            final_state: parse_run_state(parts[3])?,
-            seats_participated: Vec::new(), // Simplified
-            veto_used: if parts[5].is_empty() { None } else { parse_seat(parts[5]).ok() },
-            escalation_triggered: parts[6].parse()?,
-            rollback_executed: parts[7].parse()?,
-            archive_executed: parts[8].parse()?,
-            terminate_executed: parts[9].parse()?,
-            authority_violation: parts[10].parse()?,
-            fake_closure: parts[11].parse()?,
-            tokens_used: parts[12].parse()?,
-            wall_clock_seconds: parts[13].parse()?,
-            human_intervention: parts[14].parse()?,
-            metadata: HashMap::new(),
-        })
     }
 }
 
-/// Production ledger
+/// Production ledger with persistence
 pub struct Ledger {
     storage_path: PathBuf,
-    current_run: Option<LedgerEntry>,
+    entries: HashMap<String, LedgerEntry>,
+    current_run_id: Option<String>,
     start_time: Option<DateTime<Utc>>,
 }
 
 impl Ledger {
-    /// Create a new ledger
+    /// Create a new ledger, loading existing entries from disk
     pub fn new(storage_path: impl AsRef<Path>) -> Result<Self> {
         let storage_path = storage_path.as_ref().to_path_buf();
         
@@ -125,143 +100,36 @@ impl Ledger {
         if !csv_path.exists() {
             let mut file = File::create(&csv_path)
                 .with_context(|| "Failed to create ledger CSV")?;
-            writeln!(file, "run_id,timestamp,input_type,final_state,seats_participated,veto_used,escalation_triggered,rollback_executed,archive_executed,terminate_executed,authority_violation,fake_closure,tokens_used,wall_clock_seconds,human_intervention")?;
+            writeln!(file, "run_id,timestamp,input_type,final_state,seats_participated,veto_used,escalation_triggered,rollback_executed,archive_executed,terminate_executed,authority_violation,fake_closure,tokens_used,wall_clock_seconds,human_intervention,finalized")?;
         }
+        
+        // Load existing entries
+        let entries = Self::load_entries(&csv_path)?;
         
         Ok(Self {
             storage_path,
-            current_run: None,
+            entries,
+            current_run_id: None,
             start_time: None,
         })
     }
     
-    /// Start a new run
-    pub fn start_run(&mut self, run_id: impl Into<String>, input_type: impl Into<String>) {
-        self.current_run = Some(LedgerEntry::new(run_id, input_type));
-        self.start_time = Some(Utc::now());
-    }
-    
-    /// Record seat participation
-    pub fn record_participation(&mut self, seat: Seat) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            if !entry.seats_participated.contains(&seat) {
-                entry.seats_participated.push(seat);
-            }
-        }
-        Ok(())
-    }
-    
-    /// Record veto
-    pub fn record_veto(&mut self, seat: Seat) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            entry.veto_used = Some(seat);
-        }
-        Ok(())
-    }
-    
-    /// Record escalation
-    pub fn record_escalation(&mut self) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            entry.escalation_triggered = true;
-        }
-        Ok(())
-    }
-    
-    /// Record rollback
-    pub fn record_rollback(&mut self) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            entry.rollback_executed = true;
-        }
-        Ok(())
-    }
-    
-    /// Record archive
-    pub fn record_archive(&mut self) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            entry.archive_executed = true;
-        }
-        Ok(())
-    }
-    
-    /// Record termination
-    pub fn record_terminate(&mut self) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            entry.terminate_executed = true;
-        }
-        Ok(())
-    }
-    
-    /// Record red line violation
-    pub fn record_red_line(&mut self, violation_type: RedLineViolation) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            match violation_type {
-                RedLineViolation::AuthorityViolation => entry.authority_violation = true,
-                RedLineViolation::FakeClosure => entry.fake_closure = true,
-            }
-        }
-        Ok(())
-    }
-    
-    /// Record token usage
-    pub fn record_tokens(&mut self, tokens: u64) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            entry.tokens_used = tokens;
-        }
-        Ok(())
-    }
-    
-    /// Record human intervention
-    pub fn record_human_intervention(&mut self) -> Result<()> {
-        if let Some(entry) = &mut self.current_run {
-            entry.human_intervention = true;
-        }
-        Ok(())
-    }
-    
-    /// Finalize the current run
-    pub fn finalize_run(&mut self, final_state: RunState) -> Result<()> {
-        if let Some(mut entry) = self.current_run.take() {
-            entry.final_state = final_state;
-            
-            // Calculate wall clock time
-            if let Some(start) = self.start_time {
-                entry.wall_clock_seconds = (Utc::now() - start).num_seconds() as u64;
-            }
-            
-            // Append to CSV
-            let csv_path = self.storage_path.join("production_ledger.csv");
-            let mut file = OpenOptions::new()
-                .append(true)
-                .open(&csv_path)
-                .with_context(|| "Failed to open ledger CSV for append")?;
-            
-            writeln!(file, "{}", entry.to_csv_row())
-                .with_context(|| "Failed to write ledger entry")?;
-            
-            self.start_time = None;
-        }
-        
-        Ok(())
-    }
-    
-    /// Get all ledger entries
-    pub fn get_entries(&self) -> Result<Vec<LedgerEntry>> {
-        let csv_path = self.storage_path.join("production_ledger.csv");
+    /// Load all entries from CSV
+    fn load_entries(csv_path: &Path) -> Result<HashMap<String, LedgerEntry>> {
+        let mut entries = HashMap::new();
         
         if !csv_path.exists() {
-            return Ok(Vec::new());
+            return Ok(entries);
         }
         
-        let file = File::open(&csv_path)
+        let file = File::open(csv_path)
             .with_context(|| "Failed to open ledger CSV")?;
         
         let reader = BufReader::new(file);
-        let mut entries = Vec::new();
         
         for (i, line) in reader.lines().enumerate() {
             if i == 0 {
-                // Skip header
-                continue;
+                continue; // Skip header
             }
             
             let line = line.with_context(|| "Failed to read ledger line")?;
@@ -269,8 +137,10 @@ impl Ledger {
                 continue;
             }
             
-            match LedgerEntry::from_csv_row(&line) {
-                Ok(entry) => entries.push(entry),
+            match Self::parse_csv_row(&line) {
+                Ok(entry) => {
+                    entries.insert(entry.run_id.clone(), entry);
+                }
                 Err(e) => {
                     tracing::warn!("Failed to parse ledger row {}: {}", i, e);
                 }
@@ -280,12 +150,211 @@ impl Ledger {
         Ok(entries)
     }
     
+    /// Parse CSV row into entry
+    fn parse_csv_row(row: &str) -> Result<LedgerEntry> {
+        let parts: Vec<&str> = row.split(',').collect();
+        if parts.len() < 15 {
+            anyhow::bail!("Invalid CSV row: insufficient columns");
+        }
+        
+        Ok(LedgerEntry {
+            run_id: parts[0].to_string(),
+            timestamp: DateTime::parse_from_rfc3339(parts[1])
+                .map_err(|e| anyhow::anyhow!("Failed to parse timestamp: {}", e))?
+                .into(),
+            input_type: parts[2].to_string(),
+            final_state: parse_run_state(parts[3])?,
+            seats_participated: Vec::new(),
+            veto_used: if parts[5].is_empty() { None } else { parse_seat(parts[5]).ok() },
+            escalation_triggered: parts[6].parse()?,
+            rollback_executed: parts[7].parse()?,
+            archive_executed: parts[8].parse()?,
+            terminate_executed: parts[9].parse()?,
+            authority_violation: parts[10].parse()?,
+            fake_closure: parts[11].parse()?,
+            tokens_used: parts[12].parse()?,
+            wall_clock_seconds: parts[13].parse()?,
+            human_intervention: parts[14].parse()?,
+            metadata: HashMap::new(),
+            finalized: parts.get(15).map(|s| s.parse().unwrap_or(false)).unwrap_or(false),
+        })
+    }
+    
+    /// Save all entries to CSV
+    fn save_entries(&self) -> Result<()> {
+        let csv_path = self.storage_path.join("production_ledger.csv");
+        let mut file = File::create(&csv_path)
+            .with_context(|| "Failed to create ledger CSV")?;
+        
+        // Write header
+        writeln!(file, "run_id,timestamp,input_type,final_state,seats_participated,veto_used,escalation_triggered,rollback_executed,archive_executed,terminate_executed,authority_violation,fake_closure,tokens_used,wall_clock_seconds,human_intervention,finalized")?;
+        
+        // Write all entries
+        for entry in self.entries.values() {
+            writeln!(file, "{}", entry.to_csv_row())?;
+        }
+        
+        file.flush()?;
+        Ok(())
+    }
+    
+    /// Start a new run - immediately persists
+    pub fn start_run(&mut self, run_id: impl Into<String>, input_type: impl Into<String>) -> Result<()> {
+        let run_id = run_id.into();
+        let input_type = input_type.into();
+        
+        // Create entry
+        let entry = LedgerEntry::new(&run_id, &input_type);
+        
+        // Store in cache
+        let run_id_str = run_id.to_string();
+        self.entries.insert(run_id_str.clone(), entry);
+        self.current_run_id = Some(run_id_str.clone());
+        self.start_time = Some(Utc::now());
+        
+        // IMMEDIATELY persist
+        self.save_entries()?;
+        
+        tracing::info!("Started ledger entry for run: {}", run_id_str);
+        Ok(())
+    }
+    
+    /// Get mutable reference to entry by run_id
+    fn get_entry(&mut self, run_id: &str) -> Option<&mut LedgerEntry> {
+        self.entries.get_mut(run_id)
+    }
+    
+    /// Record seat participation
+    pub fn record_participation(&mut self, run_id: &str, seat: Seat) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            if !entry.seats_participated.contains(&seat) {
+                entry.seats_participated.push(seat);
+            }
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Record veto
+    pub fn record_veto(&mut self, run_id: &str, seat: Seat) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            entry.veto_used = Some(seat);
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Record escalation
+    pub fn record_escalation(&mut self, run_id: &str) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            entry.escalation_triggered = true;
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Record rollback
+    pub fn record_rollback(&mut self, run_id: &str) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            entry.rollback_executed = true;
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Record archive
+    pub fn record_archive(&mut self, run_id: &str) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            entry.archive_executed = true;
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Record termination
+    pub fn record_terminate(&mut self, run_id: &str) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            entry.terminate_executed = true;
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Record red line violation
+    pub fn record_red_line(&mut self, run_id: &str, violation_type: RedLineViolation) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            match violation_type {
+                RedLineViolation::AuthorityViolation => entry.authority_violation = true,
+                RedLineViolation::FakeClosure => entry.fake_closure = true,
+            }
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Record token usage
+    pub fn record_tokens(&mut self, run_id: &str, tokens: u64) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            entry.tokens_used = tokens;
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Record human intervention
+    pub fn record_human_intervention(&mut self, run_id: &str) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            entry.human_intervention = true;
+            self.save_entries()?;
+        }
+        Ok(())
+    }
+    
+    /// Finalize a run - persists final state
+    pub fn finalize_run(&mut self, run_id: &str, final_state: RunState) -> Result<()> {
+        if let Some(entry) = self.get_entry(run_id) {
+            entry.final_state = final_state;
+            entry.finalized = true;
+            
+            // Calculate wall clock time from entry timestamp
+            entry.wall_clock_seconds = (Utc::now() - entry.timestamp).num_seconds() as u64;
+            
+            // Persist final state
+            self.save_entries()?;
+            
+            tracing::info!("Finalized ledger entry for run: {} with state: {:?}", run_id, final_state);
+        }
+        
+        if self.current_run_id.as_ref().map(|s| s.as_str()) == Some(run_id) {
+            self.current_run_id = None;
+            self.start_time = None;
+        }
+        
+        Ok(())
+    }
+    
+    /// Load a run's entry (for cross-CLI continuity)
+    pub fn load_run(&mut self, run_id: &str) -> bool {
+        if let Some(entry) = self.entries.get(run_id) {
+            if !entry.finalized {
+                self.current_run_id = Some(run_id.to_string());
+                self.start_time = Some(entry.timestamp);
+                return true;
+            }
+        }
+        false
+    }
+    
+    /// Get all ledger entries
+    pub fn get_entries(&self) -> Result<Vec<LedgerEntry>> {
+        Ok(self.entries.values().cloned().collect())
+    }
+    
     /// Get run count by state
     pub fn get_run_counts(&self) -> Result<HashMap<RunState, usize>> {
-        let entries = self.get_entries()?;
         let mut counts = HashMap::new();
         
-        for entry in entries {
+        for entry in self.entries.values() {
             *counts.entry(entry.final_state).or_insert(0) += 1;
         }
         
@@ -294,43 +363,27 @@ impl Ledger {
     
     /// Get stability metrics
     pub fn get_stability_metrics(&self) -> Result<StabilityMetrics> {
-        let entries = self.get_entries()?;
+        let entries: Vec<_> = self.entries.values().collect();
         
         let total = entries.len();
         let authority_violations = entries.iter().filter(|e| e.authority_violation).count();
         let fake_closures = entries.iter().filter(|e| e.fake_closure).count();
         let rollbacks = entries.iter().filter(|e| e.rollback_executed).count();
         let terminations = entries.iter().filter(|e| e.terminate_executed).count();
+        let clean_runs = total.saturating_sub(authority_violations + fake_closures + terminations);
         
         Ok(StabilityMetrics {
             total_runs: total,
+            clean_runs,
             authority_violations,
             fake_closures,
             rollbacks,
             terminations,
-            clean_runs: total - authority_violations - fake_closures,
         })
     }
 }
 
-/// Red line violation types
-#[derive(Debug, Clone, Copy)]
-pub enum RedLineViolation {
-    AuthorityViolation,
-    FakeClosure,
-}
-
-/// Stability metrics
-#[derive(Debug, Clone)]
-pub struct StabilityMetrics {
-    pub total_runs: usize,
-    pub authority_violations: usize,
-    pub fake_closures: usize,
-    pub rollbacks: usize,
-    pub terminations: usize,
-    pub clean_runs: usize,
-}
-
+/// Parse run state from string
 fn parse_run_state(s: &str) -> Result<RunState> {
     match s {
         "Pending" => Ok(RunState::Pending),
@@ -346,6 +399,7 @@ fn parse_run_state(s: &str) -> Result<RunState> {
     }
 }
 
+/// Parse seat from string
 fn parse_seat(s: &str) -> Result<Seat> {
     match s {
         "Tianshu" => Ok(Seat::Tianshu),
@@ -368,5 +422,36 @@ fn parse_seat(s: &str) -> Result<Seat> {
         "Xiwangmu" => Ok(Seat::Xiwangmu),
         "Fengdudadi" => Ok(Seat::Fengdudadi),
         _ => anyhow::bail!("Unknown seat: {}", s),
+    }
+}
+
+/// Red line violation types
+#[derive(Debug, Clone, Copy)]
+pub enum RedLineViolation {
+    AuthorityViolation,
+    FakeClosure,
+}
+
+/// Stability metrics
+#[derive(Debug, Clone)]
+pub struct StabilityMetrics {
+    pub total_runs: usize,
+    pub clean_runs: usize,
+    pub authority_violations: usize,
+    pub fake_closures: usize,
+    pub rollbacks: usize,
+    pub terminations: usize,
+}
+
+impl StabilityMetrics {
+    /// Calculate stability score (0-100)
+    pub fn stability_score(&self) -> u32 {
+        if self.total_runs == 0 {
+            return 100;
+        }
+        
+        let bad_runs = self.authority_violations + self.fake_closures + self.terminations;
+        let score = 100 - (bad_runs * 100 / self.total_runs);
+        score as u32
     }
 }

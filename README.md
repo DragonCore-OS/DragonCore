@@ -129,30 +129,42 @@ DragonCore 是一个面向多智能体 AI 系统的生产级治理内核。
 
 ## 开发与验证状态
 
-DragonCore Runtime 已完成单路径部分验证，真实 API 驱动下的席位执行、tmux 隔离与 worktree 隔离已获证明。
+**DragonCore Runtime v0.2.1 已完成首条单节点、JSON 持久化治理路径的端到端验证。**
 
-| 组件 | 代码状态 | 运行验证 | 文档 |
-|------|----------|----------|------|
-| 19席治理协议 | ✅ 已实现 | ✅ 已验证 (单路径) | ✅ 完整 |
-| 席位执行 (RV-003) | ✅ 已实现 | ✅ 已验证 (真实API响应) | ✅ 完整 |
-| tmux 进程隔离 (RV-006) | ✅ 已实现 | ✅ 已验证 (20窗口) | ✅ 完整 |
-| Git worktree 隔离 (RV-007) | ✅ 已实现 | ✅ 已验证 (独立worktree) | ✅ 完整 |
-| 否决链 (RV-004) | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
-| 生产账本 (RV-005) | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
-| 终局裁决 (RV-008) | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
-| CLI 接口 | ✅ 已实现 | ✅ 编译通过 | ✅ 完整 |
+### v0.2.1 验证完成 (10/10)
 
-**验证进度**: 5/10 verified | real API path proven | governance closure pending
+| 验证项 | 状态 | 证据 |
+|--------|------|------|
+| RV-001: 单路径执行 | ✅ 已验证 | Tianquan API 调用成功 |
+| RV-002: Tmux 窗口隔离 | ✅ 已验证 | 19席独立会话 |
+| RV-003: Worktree 创建 | ✅ 已验证 | Git worktree 隔离 |
+| RV-004: Veto 执行 | ✅ 已验证 | 跨 CLI 状态延续 |
+| RV-005: Ledger 自动写入 | ✅ 已验证 | CSV 立即写入 |
+| RV-006: 终止机制 | ✅ 已验证 | 状态持久化 |
+| RV-007: 归档机制 | ✅ 已验证 | 状态变更记录 |
+| RV-008: 终局裁决 | ✅ 已验证 | 跨 CLI 加载 |
+| RV-009: Worktree 清理 | ✅ 已验证 | Tmux 清理完成 |
+| RV-010: Metrics 准确性 | ✅ 已验证 | Ledger 正确反映 |
+
+**验证结论**: 10/10 完成 | 单节点 JSON 路径已验证 | 可运行系统
+
+**核心证据**:
+```bash
+# 跨 CLI 状态延续已证实
+$ dragoncore run --run-id test ...
+$ dragoncore veto --run-id test --seat Yuheng ...  
+[INFO] Loaded 1 runs from persistent storage  # ← 状态找到
+$ dragoncore final-gate --run-id test --approve
+$ dragoncore metrics
+Total runs: 1  # ← Metrics 正确
+```
 
 **验证文档**:
-- [`runtime/VERIFICATION_REPORT.md`](runtime/VERIFICATION_REPORT.md) - 详细验证状态
-- [`runtime/VERIFICATION_CHECKLIST.md`](runtime/VERIFICATION_CHECKLIST.md) - 验证清单 (5/10完成)
-- [`runtime/VERIFICATION_RESULTS.md`](runtime/VERIFICATION_RESULTS.md) - 真实API验证结果
-- [`runtime/KNOWN_GAPS.md`](runtime/KNOWN_GAPS.md) - 已知缺陷
+- [`runtime/STATUS.md`](runtime/STATUS.md) - v0.2.1 完整状态
+- [`runtime/RELEASE_NOTES_v0.2.1.md`](runtime/RELEASE_NOTES_v0.2.1.md) - 发布说明
+- [`runtime/docs/VERIFICATION_REPORT.md`](runtime/docs/VERIFICATION_REPORT.md) - 详细证据
 
-**Verified with real Kimi API-backed execution. Confirmed working in single-path validation.**
-
-**DragonCore Runtime is not presented as production-ready. It is presented as an auditable implementation with real API-backed partial verification entering governance closure testing.**
+**DragonCore Runtime is operationally verified for the single-node JSON-backed path.**
 
 ---
 
