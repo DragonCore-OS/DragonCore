@@ -8,15 +8,22 @@
 
 ## Summary | 总结
 
-**Status**: 🟡 **single-path partially verified (4/10)**
+**Status**: 🟡 **single-path partially verified (5/10)**
+
+**5/10 verified | real API path proven | seat execution proven | runtime isolation proven | governance closure pending (requires state persistence)**
 
 | Verified | Mechanism | Status | Evidence |
 |----------|-----------|--------|----------|
 | RV-001 | Configuration Init | ✅ VERIFIED | Config file generated |
-| RV-002 | Governance Run | 🟡 PARTIAL | Worktree/tmux created, API blocked |
+| RV-002 | Governance Run | ✅ VERIFIED | Run initialized, worktree + tmux created |
+| RV-003 | Seat Execution | ✅ VERIFIED | Real API response from Tianquan (CSO) |
 | RV-006 | tmux Isolation | ✅ VERIFIED | 20 windows created |
-| RV-007 | Worktree Isolation | ✅ VERIFIED | Independent git worktree |
-| RV-003-005, 008-010 | API-dependent | 🔴 BLOCKED | API keys invalid |
+| RV-007 | Worktree Isolation | ✅ VERIFIED | Independent git worktree verified |
+| RV-004 | Veto Chain | 🔴 BLOCKED | Requires state persistence (in-memory only) |
+| RV-005 | Ledger Auto-Write | 🔴 BLOCKED | Requires run finalization |
+| RV-008 | Final Gate | 🔴 BLOCKED | Requires state persistence |
+| RV-009 | Archive | 🔴 BLOCKED | Requires state persistence |
+| RV-010 | Metrics Update | 🔴 BLOCKED | Requires ledger data |
 
 ---
 
@@ -146,37 +153,75 @@ nothing to commit, working tree clean
 
 ---
 
-## API Issue Analysis | API 问题分析
+## Critical Finding: State Persistence Gap | 关键发现：状态持久化缺口
 
-### Kimi Code API (kimi.com/code)
+### Architecture Limitation Exposed
 
-**Endpoint**: `https://api.kimi.com/coding/v1`  
-**Restriction**: Only allows specific Coding Agents (kimi-cli, Claude Code, Roo Code, etc.)
+**Issue**: Current runtime stores all governance state **in-memory only**.
 
-**Error**:
-```json
-{"error":{"message":"Kimi For Coding is currently only available for Coding Agents...","type":"access_terminated_error"}}
+**Impact**: 
+- Each CLI command spawns a new process with empty state
+- Runs created by `dragoncore-runtime run` are invisible to subsequent commands
+- Veto, final-gate, archive operations cannot find the run
+- Ledger cannot be updated because runs are never "finalized" in persistent storage
+
+**Evidence**:
+```bash
+$ dragoncore-runtime run --run-id TEST-001
+# Creates run in memory, initializes tmux + worktree
+# Run ID: TEST-001 created successfully
+
+$ dragoncore-runtime veto --run-id TEST-001
+# Error: Run not found
+# New process, no access to previous run's memory
 ```
 
-**Root Cause**: API requires specific client identification beyond just the key.
+**Root Cause**: `GovernanceEngine` is instantiated fresh in each command execution:
+```rust
+// Each command does:
+let runtime = DragonCoreRuntime::new(config).await?;
+// Creates NEW GovernanceEngine with empty HashMap
+```
 
-### Recommendation
+### Solution Required
 
-To complete verification, please provide:
+To enable RV-004 through RV-010, runtime needs:
 
-1. **Moonshot AI Platform Key** (not Kimi Code):
-   - Register at: https://platform.moonshot.cn/
-   - Create API key
-   - Use endpoint: `https://api.moonshot.cn/v1`
+1. **State Persistence Layer**
+   - SQLite or JSON file for run state
+   - Process-safe read/write
+   - Recovery on restart
 
-2. **OR DeepSeek Key**:
-   - Register at: https://platform.deepseek.com/
-   - Create API key
-   - Use endpoint: `https://api.deepseek.com/v1`
+2. **Run State Machine**
+   - `Created` → `Active` → `Completed` / `Vetoed` / `Archived`
+   - State transitions persisted immediately
 
-3. **OR Qwen Key**:
-   - Register at: https://dashscope.aliyun.com/
-   - Create API key
+3. **Ledger Integration**
+   - Write to CSV on every state change (not just at end)
+   - Append-only log pattern
+
+**Implementation Status**: 🔴 NOT IMPLEMENTED (listed in KNOWN_GAPS.md as FG-005)
+
+---
+
+## API Integration Success | API集成成功
+
+### Kimi CLI Provider Works
+
+Despite the state persistence issue, **real API-backed seat execution is verified**:
+
+```bash
+$ export KIMI_API_KEY="sk-kimi-..."
+$ dragoncore-runtime run --task "Test"
+
+Tianquan (CSO) Response:
+---
+## DragonCore Runtime 测试报告
+### 测试结果：✅ 通过
+...
+```
+
+**Verified**: Kimi CLI provider successfully bridges DragonCore ↔ Kimi API.
 
 ---
 
@@ -226,15 +271,55 @@ To reach 🟢 **operationally verified** status:
 ## Conclusion | 结论
 
 DragonCore Runtime demonstrates:
-- ✅ Solid architecture (worktree, tmux, config all functional)
-- ✅ Clean code structure
-- ✅ Proper error handling
-- 🔴 API integration requires valid credentials
 
-**Current Grade**: 4/10 verified  
-**Status**: Buildable, structurally sound, awaiting API credentials for full verification
+### ✅ Verified (5/10)
+- **Real API-backed execution**: Kimi CLI provider works, actual model responses received
+- **Process isolation**: tmux 20-window governance sessions created and functional
+- **Execution isolation**: Git worktrees created, independent, correct structure
+- **Configuration**: TOML generation and loading works
+- **CLI structure**: All 13 commands parse and execute
+
+### 🔴 Blocked by Architecture Gap (5/10)
+- **Veto chain**: Requires state persistence (currently in-memory only)
+- **Ledger auto-write**: Cannot trigger without run finalization
+- **Final gate**: Requires state persistence
+- **Archive**: Requires state persistence  
+- **Metrics**: Depends on ledger data
+
+### Critical Finding
+**State Persistence is the blocker**, not API integration.
+
+The runtime can:
+- ✅ Initialize runs
+- ✅ Execute seats with real AI responses
+- ✅ Create isolated environments
+
+But cannot:
+- ❌ Complete governance lifecycle (veto → final gate → archive)
+- ❌ Persist decisions to ledger
+- ❌ Track metrics across runs
+
+**Required for 10/10**: Implement `FG-005: Run State Persistence` (SQLite/JSON persistence layer)
+
+---
+
+## Next Steps | 下一步
+
+To reach 10/10 verification:
+
+1. **Implement state persistence** (v0.2.0 priority)
+   - SQLite or JSON-based run state storage
+   - Process-safe concurrent access
+   - State machine transitions persisted
+
+2. **Re-test RV-004 through RV-010**
+   - With persistent state, all governance mechanisms should work
+
+3. **Multi-run verification**
+   - Concurrent runs with proper isolation
+   - Ledger consistency across runs
 
 ---
 
 *Report generated: 2026-03-14*  
-*Next update: After API credentials provided*
+*Status: Real API path verified, state persistence required for closure*

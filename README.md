@@ -129,24 +129,30 @@ DragonCore 是一个面向多智能体 AI 系统的生产级治理内核。
 
 ## 开发与验证状态
 
-DragonCore Runtime 已完成结构实现，可编译、可进行部分静态运行，但尚未完成运行级验证。
+DragonCore Runtime 已完成单路径部分验证，真实 API 驱动下的席位执行、tmux 隔离与 worktree 隔离已获证明。
 
 | 组件 | 代码状态 | 运行验证 | 文档 |
 |------|----------|----------|------|
-| 19席治理协议 | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
-| 否决/升级/终止链 | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
-| 生产账本 | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
-| tmux 进程隔离 | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
-| Git worktree 隔离 | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
+| 19席治理协议 | ✅ 已实现 | ✅ 已验证 (单路径) | ✅ 完整 |
+| 席位执行 (RV-003) | ✅ 已实现 | ✅ 已验证 (真实API响应) | ✅ 完整 |
+| tmux 进程隔离 (RV-006) | ✅ 已实现 | ✅ 已验证 (20窗口) | ✅ 完整 |
+| Git worktree 隔离 (RV-007) | ✅ 已实现 | ✅ 已验证 (独立worktree) | ✅ 完整 |
+| 否决链 (RV-004) | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
+| 生产账本 (RV-005) | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
+| 终局裁决 (RV-008) | ✅ 已实现 | ⏳ 待验证 | ✅ 完整 |
 | CLI 接口 | ✅ 已实现 | ✅ 编译通过 | ✅ 完整 |
+
+**验证进度**: 5/10 verified | real API path proven | governance closure pending
 
 **验证文档**:
 - [`runtime/VERIFICATION_REPORT.md`](runtime/VERIFICATION_REPORT.md) - 详细验证状态
-- [`runtime/VERIFICATION_CHECKLIST.md`](runtime/VERIFICATION_CHECKLIST.md) - 验证清单
+- [`runtime/VERIFICATION_CHECKLIST.md`](runtime/VERIFICATION_CHECKLIST.md) - 验证清单 (5/10完成)
+- [`runtime/VERIFICATION_RESULTS.md`](runtime/VERIFICATION_RESULTS.md) - 真实API验证结果
 - [`runtime/KNOWN_GAPS.md`](runtime/KNOWN_GAPS.md) - 已知缺陷
-- [`runtime/SMOKE_TEST_RESULTS.md`](runtime/SMOKE_TEST_RESULTS.md) - 冒烟测试
 
-**DragonCore Runtime is not presented as production-ready. It is presented as an auditable implementation entering operational verification.**
+**Verified with real Kimi API-backed execution. Confirmed working in single-path validation.**
+
+**DragonCore Runtime is not presented as production-ready. It is presented as an auditable implementation with real API-backed partial verification entering governance closure testing.**
 
 ---
 

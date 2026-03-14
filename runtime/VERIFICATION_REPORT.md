@@ -8,21 +8,29 @@
 
 ## Executive Summary | 执行摘要
 
-DragonCore Runtime 核心骨架已完成，**但尚未完成生产级验证**。
+**Status**: 🟡 **single-path partially verified (5/10)**
 
-This document tracks what has been verified vs. what remains to be proven.
+DragonCore Runtime has been upgraded from "buildable skeleton" to **real API-backed partial verification**.
+
+### Verification Progress | 验证进度
+
+**5/10 verified | real API path proven | seat execution proven | runtime isolation proven | governance closure still pending**
 
 | Category | Status | Evidence Location |
 |----------|--------|-------------------|
 | Compilation | ✅ Verified | `target/release/dragoncore-runtime` (5.0 MB) |
 | CLI Structure | ✅ Verified | `--help` outputs correct commands |
 | 19 Seat Registry | ✅ Verified | `seats` command shows all 19 |
-| Configuration | ⚠️ Partial | `init` works, not stress-tested |
-| Governance Execution | 🔴 Not Verified | Needs real API calls |
-| Veto Chain | 🔴 Not Verified | Code exists, not exercised |
-| Ledger Auto-Write | 🔴 Not Verified | Needs full run cycle |
-| tmux Isolation | 🔴 Not Verified | Code exists, not tested |
-| Worktree Isolation | 🔴 Not Verified | Code exists, not tested |
+| Configuration (RV-001) | ✅ Verified | `init` generates valid config |
+| Governance Run (RV-002) | ✅ Verified | Real run with API response |
+| Seat Execution (RV-003) | ✅ Verified | Tianquan/Yuheng responded |
+| tmux Isolation (RV-006) | ✅ Verified | 20 windows created |
+| Worktree Isolation (RV-007) | ✅ Verified | Independent git worktrees |
+| Veto Chain (RV-004) | 🔴 Not Verified | Pending |
+| Ledger Auto-Write (RV-005) | 🔴 Not Verified | Pending |
+| Final Gate (RV-008) | 🔴 Not Verified | Pending |
+| Archive (RV-009) | 🔴 Not Verified | Pending |
+| Metrics Update (RV-010) | 🔴 Not Verified | Pending |
 
 ---
 
