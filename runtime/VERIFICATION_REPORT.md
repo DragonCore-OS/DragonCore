@@ -387,23 +387,60 @@ See [KNOWN_GAPS.md](KNOWN_GAPS.md) for complete list.
 
 ## 7. Conclusion | 结论
 
-**Current State**: v0.1.0 Skeleton Complete, Verification Pending
+**Current State**: v0.1.0 - Single-path partially verified (5/10) with real API execution
 
-DragonCore Runtime has:
-- ✅ Clean, compilable Rust codebase
-- ✅ Well-structured module separation
-- ✅ CLI interface with 13 commands
-- ✅ 19-seat governance model defined
-- ✅ All major components coded
+### What Has Been Proven | 已证明
 
-DragonCore Runtime still needs:
-- 🔴 Real execution verification
-- 🔴 Mechanism authenticity proof
-- 🔴 Isolation testing
-- 🔴 Ledger validation
-- 🔴 Production hardening
+- ✅ **Real API-backed execution**: Kimi CLI provider works, actual model responses received
+- ✅ **Seat execution**: Tianquan (CSO), Yuheng (CRO) responded with real AI outputs
+- ✅ **Process isolation**: tmux 20-window governance sessions functional
+- ✅ **Execution isolation**: Git worktrees created, independent, correct structure
+- ✅ **Configuration**: TOML generation and loading works
+- ✅ **CLI structure**: All 13 commands parse and execute
 
-**Do not deploy to production until verification checklist is complete.**
+### Critical Finding | 关键发现
+
+**The primary blocker is no longer API execution, but the absence of durable run-state persistence across CLI invocations.**
+
+**当前主阻塞项已从 API 执行转为 CLI 调用之间缺少可持久化 run state。**
+
+**Root Cause**: 
+- `DragonCoreRuntime::new()` creates fresh in-memory `GovernanceEngine` every command
+- Each CLI command spawns new process with empty state
+- Run created by `run` command is invisible to `execute/veto/final-gate`
+
+**Architecture Gap**: State exists only in memory, not in system.
+
+**Impact**: 
+- 🔴 **RV-004 Veto Chain**: Cannot find prior run state
+- 🔴 **RV-005 Ledger Auto-Write**: Cannot finalize run
+- 🔴 **RV-008 Final Gate**: Cannot change run status
+- 🔴 **RV-009 Archive**: Cannot archive completed run
+- 🔴 **RV-010 Metrics Update**: No data to aggregate
+
+### Required for 10/10 | 完成10/10所需
+
+**FG-005: Run State Persistence** (P0 Blocker)
+
+- JSON-file persistence (v0.2.0)
+- Process-safe concurrent access
+- State transitions persisted immediately
+- See: `docs/PERSISTENCE_DESIGN.md`
+
+### Updated Recommendations | 更新建议
+
+**Before v0.2.0 Release**:
+- [ ] Implement `RunStore` trait with JSON persistence
+- [ ] Integrate persistence into `GovernanceEngine`
+- [ ] Update all CLI commands to load/save state
+- [ ] Verify 5 remaining checks (RV-004, 005, 008, 009, 010)
+
+**Do not deploy to production until:**
+1. ✅ State persistence implemented
+2. ✅ 10/10 verification completed
+3. ✅ Multi-run concurrency tested
+
+**Estimated time to production-ready**: 1-2 weeks (pending persistence implementation)
 
 ---
 

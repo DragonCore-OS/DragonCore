@@ -58,11 +58,17 @@ These must be resolved before any production use.
 - **Priority**: Low (correctness before speed)
 - **ETA**: v0.4.0
 
-### FG-005: No Persistence for Run State
-- **Status**: Run state only in memory
-- **Impact**: Process restart loses all runs
-- **Priority**: High
-- **ETA**: v0.2.0
+### FG-005: No Persistence for Run State ⭐ P0 BLOCKER
+- **Status**: Run state only in memory, lost between CLI commands
+- **Impact**: **ARCHITECTURE BLOCKER** - Cannot complete governance lifecycle
+  - Run created by `dragoncore-runtime run` is invisible to `execute/veto/final-gate`
+  - Each CLI command spawns new process with empty GovernanceEngine
+  - Veto, final-gate, archive operations cannot find prior run state
+  - Ledger never gets written because runs are never "finalized"
+- **Root Cause**: `DragonCoreRuntime::new()` creates fresh in-memory engine every time
+- **Priority**: **P0 - BLOCKS ALL GOVERNANCE CLOSURE TESTING**
+- **Solution**: JSON-backed run persistence (v0.2.0) → SQLite (v0.3.0)
+- **ETA**: v0.2.0 (immediate)
 
 ---
 
