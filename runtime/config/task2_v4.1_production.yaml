@@ -1,0 +1,104 @@
+# Task-2 Production Configuration v4.1 + Fallback Optimization
+# Deployment: Controlled Gray (Phase 1)
+# Date: 2026-03-14
+
+metadata:
+  version: "4.1+fallback-opt"
+  deployment_phase: "phase_1_gray"
+  observation_window_hours: 48
+  hard_lock_pending: true
+
+# FROZEN: Topology unchanged from v4.1
+topology:
+  P2:
+    pressure_level: "normal"
+    primary: "SH+AR"
+    fallback: "SH+PT"
+  
+  P3:
+    pressure_level: "high"
+    primary: "SH+PT"
+    fallback: "SH+AR"
+
+# NEW: Fallback Switching Optimization
+fallback_optimization:
+  enabled: true
+  
+  steady_state:
+    window: 3
+    variance_threshold: 0.15
+    use_ema: true
+  
+  cooldown:
+    steps: 2
+    force_stability_check: true
+  
+  decision_strategy: "steady_state_confirmed"
+  threshold_hotfix_range: 0.10
+
+diagnostics:
+  level: "FULL"
+  
+  switch_decisions:
+    log: true
+    include_pressure_history: true
+  
+  oscillation_detection:
+    enabled: true
+    pattern: "PT-AR-PT"
+    alert_on_detect: true
+  
+  anomaly_tracking:
+    enabled: true
+    hourly_threshold: 5
+    hourly_critical: 10
+
+evaluator:
+  enabled: true
+  
+  metrics:
+    - premature_switchbacks
+    - oscillation_events
+    - avg_switches_per_run
+    - avg_time_in_pt
+    - avg_time_in_ar
+    - pt_completion_rate
+    - ar_completion_rate
+    - fallback_success_rate
+    - switch_pressure_avg
+    - false_positive_switches
+  
+  report_interval_minutes: 60
+
+rollback:
+  automatic: false
+  
+  triggers:
+    p3_completion_below: 0.98
+    p3_tier2_above: 0.05
+    oscillation_increase: true
+    anomaly_spike: 10
+  
+  target_version: "4.1-base"
+  estimated_time_minutes: 5
+  data_preservation: true
+
+observation:
+  total_hours: 48
+  
+  checkpoints:
+    - hour: 0
+      name: "deployment"
+    - hour: 6
+      name: "short_term"
+    - hour: 24
+      name: "daily_cycle"
+    - hour: 48
+      name: "hard_lock_decision"
+
+constraints:
+  topology_change: FORBIDDEN
+  family_b_reopen: FORBIDDEN
+  family_a_resurrect: FORBIDDEN
+  fullstack_promote: FORBIDDEN
+  large_resweep: FORBIDDEN
