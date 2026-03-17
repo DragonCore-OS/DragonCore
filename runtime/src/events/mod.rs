@@ -74,6 +74,8 @@ pub struct CorrelationContext {
     pub parent_event_id: Option<Uuid>,
     pub actor: String,
     pub trigger_context: Option<String>,
+    // Model provider used for this event (for multi-model tracking)
+    pub provider: Option<String>,
 }
 
 impl CorrelationContext {
@@ -85,6 +87,7 @@ impl CorrelationContext {
             parent_event_id: None,
             actor: actor.into(),
             trigger_context: None,
+            provider: None,
         }
     }
     
@@ -148,6 +151,8 @@ pub struct GovernanceEvent {
     pub parent_event_id: Option<Uuid>,
     pub actor: String,
     pub trigger_context: Option<String>,
+    // Model provider used for this event (for multi-model tracking)
+    pub provider: Option<String>,
 }
 
 impl GovernanceEvent {
@@ -174,6 +179,7 @@ impl GovernanceEvent {
             parent_event_id: None,
             actor: actor.into(),
             trigger_context: None,
+            provider: None,
         }
     }
 
@@ -231,6 +237,12 @@ impl GovernanceEvent {
     /// Set trigger context
     pub fn with_trigger_context(mut self, ctx: impl Into<String>) -> Self {
         self.trigger_context = Some(ctx.into());
+        self
+    }
+    
+    /// Set model provider
+    pub fn with_provider(mut self, provider: impl Into<String>) -> Self {
+        self.provider = Some(provider.into());
         self
     }
 }

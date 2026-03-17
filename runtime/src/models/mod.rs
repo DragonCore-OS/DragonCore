@@ -474,4 +474,24 @@ impl ModelRouter {
     pub fn get_seat_mappings(&self) -> &HashMap<String, String> {
         &self.seat_mappings
     }
+    
+    /// Get provider name for a specific seat
+    pub fn get_provider_name_for_seat(&self, seat: Option<&str>) -> &str {
+        // If seat is specified and has a mapping, use it
+        if let Some(seat_name) = seat {
+            if let Some(provider_name) = self.seat_mappings.get(seat_name) {
+                if self.providers.contains_key(provider_name) {
+                    return provider_name.as_str();
+                }
+            }
+        }
+        
+        // Fall back to default provider
+        if self.providers.contains_key(&self.default_provider) {
+            return self.default_provider.as_str();
+        }
+        
+        // Last resort: return first provider
+        self.providers.keys().next().map(|s| s.as_str()).unwrap_or("unknown")
+    }
 }

@@ -201,12 +201,19 @@ impl DragonCoreRuntime {
     pub async fn execute_seat(&self, run_id: &str, seat: Seat, task: &str) -> Result<String> {
         let seat_str = format!("{:?}", seat);
         
+        // Get provider name for this seat (for tracking)
+        let provider_name = {
+            let router = self.model_router.read().await;
+            router.get_provider_name_for_seat(Some(&seat_str)).to_string()
+        };
+        
         // EMIT DIBL EVENT: SeatStarted -> Control channel
         let start_event = GovernanceEvent::new(run_id, GovernanceEventType::SeatStarted, EventChannel::Control, &seat_str)
             .with_seat(&seat_str)
             .with_scope(EventScope::Internal)
             .with_summary(format!("Seat {} started execution", seat_str))
-            .with_trigger_context("runtime.execute_seat");
+            .with_trigger_context("runtime.execute_seat")
+            .with_provider(&provider_name);
         
         if let Err(e) = self.dible.emit(start_event) {
             tracing::error!("Failed to emit seat_started event: {}", e);
@@ -250,13 +257,14 @@ impl DragonCoreRuntime {
             .with_scope(EventScope::Internal)
             .with_summary(format!("Seat {} completed (output: {} chars)", seat_str, response.len()))
             .with_artifact(format!("{:?}_output.md", seat).to_lowercase())
-            .with_trigger_context("runtime.execute_seat");
+            .with_trigger_context("runtime.execute_seat")
+            .with_provider(&provider_name);
         
         if let Err(e) = self.dible.emit(complete_event) {
             tracing::error!("Failed to emit seat_completed event: {}", e);
         }
         
-        tracing::info!("Seat {:?} executed for run {}", seat, run_id);
+        tracing::info!("Seat {:?} executed with provider {} for run {}", seat, provider_name, run_id);
         Ok(response)
     }
     
