@@ -1,9 +1,12 @@
+#![allow(unused)]
+
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod config;
+mod events;
 mod governance;
 mod ledger;
 mod models;
@@ -134,6 +137,24 @@ enum Commands {
     
     /// Show stability metrics
     Metrics,
+    
+    /// Show DIBL events for a run
+    Events {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Output format (json, table)
+        #[arg(short, long, default_value = "table")]
+        format: String,
+    },
+    
+    /// Replay DIBL events for a run
+    Replay {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+    },
     
     /// Attach to tmux session
     Attach {
@@ -279,6 +300,79 @@ async fn main() -> Result<()> {
             println!("Fake closures: {}", metrics.fake_closures);
             println!("Rollbacks: {}", metrics.rollbacks);
             println!("Terminations: {}", metrics.terminations);
+            
+            Ok(())
+        }
+        
+        Commands::Events { run_id, format } => {
+            let runtime = RuntimeBuilder::new().with_config(config).build().await?;
+            
+            match runtime.load_run_events(&run_id) {
+                Ok(events) => {
+                    if events.is_empty() {
+                        println!("No events found for run {}", run_id);
+                        return Ok(());
+                    }
+                    
+                    match format.as_str() {
+                        "json" => {
+                            for event in events {
+                                println!("{}", serde_json::to_string(&event).unwrap());
+                            }
+                        }
+                        _ => {
+                            println!("Events for run {}:", run_id);
+                            println!("{:<20} {:<12} {:<15} {:<10} {}", 
+                                "Timestamp", "Channel", "Type", "Actor", "Summary");
+                            println!("{}", "-".repeat(80));
+                            for event in events {
+                                println!("{:<20} {:<12} {:<15} {:<10} {}",
+                                    event.created_at.format("%Y-%m-%d %H:%M:%S"),
+                                    format!("{:?}", event.channel),
+                                    format!("{:?}", event.event_type),
+                                    event.actor.chars().take(10).collect::<String>(),
+                                    event.summary.chars().take(40).collect::<String>()
+                                );
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    println!("Error loading events: {}", e);
+                }
+            }
+            
+            Ok(())
+        }
+        
+        Commands::Replay { run_id } => {
+            let runtime = RuntimeBuilder::new().with_config(config).build().await?;
+            
+            println!("Replaying events for run {}...", run_id);
+            
+            match runtime.replay_run_events(&run_id) {
+                Ok(events) => {
+                    println!("Replayed {} events", events.len());
+                    
+                    // Show operator projection
+                    match runtime.get_operator_projection(&run_id) {
+                        Ok(proj) => {
+                            println!("\nRun Projection:");
+                            println!("  Current Phase: {}", proj.current_phase);
+                            println!("  Current Seat: {:?}", proj.current_seat);
+                            println!("  Veto Count: {}", proj.veto_count);
+                            println!("  Terminated: {}", proj.terminate_flag);
+                            println!("  Final Outcome: {:?}", proj.final_outcome);
+                        }
+                        Err(e) => {
+                            println!("Error getting projection: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    println!("Error replaying events: {}", e);
+                }
+            }
             
             Ok(())
         }

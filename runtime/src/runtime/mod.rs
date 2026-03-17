@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 
@@ -5,7 +7,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 use crate::config::Config;
-use crate::governance::{GovernanceEngine, RunState, Seat};
+use crate::events::{DiblManager, EventChannel, EventScope, GovernanceEvent, GovernanceEventType, JsonlEventStore, Severity};
+use crate::governance::{GovernanceEngine, Seat};
 use crate::ledger::{Ledger, StabilityMetrics};
 use crate::models::{Message, ModelRouter, Role};
 use crate::persistence::{JsonFileStore, RunStore};
@@ -22,6 +25,7 @@ pub struct DragonCoreRuntime {
     worktree: WorktreeManager,
     model_router: Arc<RwLock<ModelRouter>>,
     active_runs: Arc<RwLock<HashMap<String, RunContext>>>,
+    dible: Arc<DiblManager>,
 }
 
 impl DragonCoreRuntime {
@@ -72,6 +76,12 @@ impl DragonCoreRuntime {
             }
         }
         
+        // Initialize DIBL event store
+        let events_path = config.execution.worktree_base.join("../runtime_state/events");
+        let event_store = Arc::new(JsonlEventStore::new(&events_path)?);
+        let dible = Arc::new(DiblManager::new(event_store));
+        tracing::info!("Initialized DIBL event store at: {:?}", events_path);
+        
         Ok(Self {
             config,
             governance: Arc::new(RwLock::new(governance)),
@@ -81,6 +91,7 @@ impl DragonCoreRuntime {
             worktree,
             model_router: Arc::new(RwLock::new(model_router)),
             active_runs: Arc::new(RwLock::new(HashMap::new())),
+            dible,
         })
     }
     
@@ -108,8 +119,8 @@ impl DragonCoreRuntime {
             let mut gov = self.governance.write().await;
             let run_state = gov.create_run(
                 run_id.clone(),
-                task,
-                input_type,
+                task.clone(),
+                input_type.clone(),
                 worktree_path.clone(),
                 tmux_session,
             )?;
@@ -136,13 +147,35 @@ impl DragonCoreRuntime {
             create_governance_session(&self.tmux, &run_id)?;
         }
         
+        // EMIT DIBL EVENT: RunCreated -> Control channel
+        let event = GovernanceEvent::new(&run_id, GovernanceEventType::RunCreated, EventChannel::Control, "system")
+            .with_scope(EventScope::OperatorVisible)
+            .with_summary(format!("Task: {}", task))
+            .with_artifact(format!("worktree: {:?}", worktree_path))
+            .with_trigger_context("runtime.init_run");
+        
+        if let Err(e) = self.dible.emit(event) {
+            tracing::error!("Failed to emit run_created event: {}", e);
+        }
+        
         tracing::info!("Governance run {} initialized at {:?}", run_id, worktree_path);
         Ok(context)
     }
     
     /// Execute a seat's role in a run
     pub async fn execute_seat(&self, run_id: &str, seat: Seat, task: &str) -> Result<String> {
-        let run_id_owned = run_id.to_string();
+        let seat_str = format!("{:?}", seat);
+        
+        // EMIT DIBL EVENT: SeatStarted -> Control channel
+        let start_event = GovernanceEvent::new(run_id, GovernanceEventType::SeatStarted, EventChannel::Control, &seat_str)
+            .with_seat(&seat_str)
+            .with_scope(EventScope::Internal)
+            .with_summary(format!("Seat {} started execution", seat_str))
+            .with_trigger_context("runtime.execute_seat");
+        
+        if let Err(e) = self.dible.emit(start_event) {
+            tracing::error!("Failed to emit seat_started event: {}", e);
+        }
         
         // Record participation
         {
@@ -176,6 +209,18 @@ impl DragonCoreRuntime {
             context.write_artifact(&output_file, &response)?;
         }
         
+        // EMIT DIBL EVENT: SeatCompleted -> Research channel
+        let complete_event = GovernanceEvent::new(run_id, GovernanceEventType::SeatCompleted, EventChannel::Research, &seat_str)
+            .with_seat(&seat_str)
+            .with_scope(EventScope::Internal)
+            .with_summary(format!("Seat {} completed (output: {} chars)", seat_str, response.len()))
+            .with_artifact(format!("{:?}_output.md", seat).to_lowercase())
+            .with_trigger_context("runtime.execute_seat");
+        
+        if let Err(e) = self.dible.emit(complete_event) {
+            tracing::error!("Failed to emit seat_completed event: {}", e);
+        }
+        
         tracing::info!("Seat {:?} executed for run {}", seat, run_id);
         Ok(response)
     }
@@ -201,6 +246,22 @@ impl DragonCoreRuntime {
             ledger.record_veto(run_id, seat)?;
         }
         
+        // EMIT DIBL EVENT: VetoExercised -> Security channel
+        // Rule: JSON/ledger must succeed before broadcast
+        let seat_str = format!("{:?}", seat);
+        let event = GovernanceEvent::new(run_id, GovernanceEventType::VetoExercised, EventChannel::Security, &seat_str)
+            .with_seat(&seat_str)
+            .with_scope(EventScope::OperatorVisible)
+            .with_severity(Severity::Warn)
+            .with_summary(reason.to_string())
+            .with_trigger_context("runtime.exercise_veto");
+        
+        if let Err(e) = self.dible.emit(event) {
+            tracing::error!("Failed to emit veto event: {}", e);
+            // Note: We don't fail the operation if event emission fails
+            // The veto itself is already persisted in JSON/ledger
+        }
+        
         tracing::info!("Veto exercised by {:?} on run {}: {}", seat, run_id, reason);
         Ok(())
     }
@@ -220,6 +281,28 @@ impl DragonCoreRuntime {
             ledger.load_run(run_id);
             let final_state = if approve { crate::governance::RunState::Approved } else { crate::governance::RunState::Rejected };
             ledger.finalize_run(run_id, final_state)?;
+        }
+        
+        // EMIT DIBL EVENT: FinalGateOpened -> Control channel
+        let fg_event = GovernanceEvent::new(run_id, GovernanceEventType::FinalGateOpened, EventChannel::Control, "Tianshu")
+            .with_seat("Tianshu")
+            .with_scope(EventScope::OperatorVisible)
+            .with_summary(format!("Final gate: {}", if approve { "APPROVED" } else { "REJECTED" }))
+            .with_trigger_context("runtime.final_gate");
+        
+        if let Err(e) = self.dible.emit(fg_event) {
+            tracing::error!("Failed to emit final_gate event: {}", e);
+        }
+        
+        // EMIT DIBL EVENT: DecisionCommitted -> Control channel
+        let decision_event = GovernanceEvent::new(run_id, GovernanceEventType::DecisionCommitted, EventChannel::Control, "Tianshu")
+            .with_seat("Tianshu")
+            .with_scope(EventScope::Exportable)
+            .with_summary(if approve { "APPROVED".to_string() } else { "REJECTED".to_string() })
+            .with_trigger_context("runtime.final_gate");
+        
+        if let Err(e) = self.dible.emit(decision_event) {
+            tracing::error!("Failed to emit decision event: {}", e);
         }
         
         tracing::info!("Final gate executed for run {}: {}", run_id, if approve { "APPROVED" } else { "REJECTED" });
@@ -247,6 +330,18 @@ impl DragonCoreRuntime {
         {
             let mut active = self.active_runs.write().await;
             active.remove(run_id);
+        }
+        
+        // EMIT DIBL EVENT: ArchiveCompleted -> Ops channel
+        let seat_str = format!("{:?}", seat);
+        let event = GovernanceEvent::new(run_id, GovernanceEventType::ArchiveCompleted, EventChannel::Ops, &seat_str)
+            .with_seat(&seat_str)
+            .with_scope(EventScope::OperatorVisible)
+            .with_summary("Run archived")
+            .with_trigger_context("runtime.archive_run");
+        
+        if let Err(e) = self.dible.emit(event) {
+            tracing::error!("Failed to emit archive event: {}", e);
         }
         
         tracing::info!("Run {} archived by {:?}", run_id, seat);
@@ -281,6 +376,19 @@ impl DragonCoreRuntime {
             self.tmux.kill_session(run_id)?;
         }
         
+        // EMIT DIBL EVENT: TerminateTriggered -> Security channel
+        let seat_str = format!("{:?}", seat);
+        let event = GovernanceEvent::new(run_id, GovernanceEventType::TerminateTriggered, EventChannel::Security, &seat_str)
+            .with_seat(&seat_str)
+            .with_scope(EventScope::OperatorVisible)
+            .with_severity(Severity::Critical)
+            .with_summary(reason.to_string())
+            .with_trigger_context("runtime.terminate_run");
+        
+        if let Err(e) = self.dible.emit(event) {
+            tracing::error!("Failed to emit terminate event: {}", e);
+        }
+        
         tracing::info!("Run {} terminated by {:?}: {}", run_id, seat, reason);
         Ok(())
     }
@@ -304,6 +412,27 @@ impl DragonCoreRuntime {
     pub async fn list_active_runs(&self) -> Vec<String> {
         let active = self.active_runs.read().await;
         active.keys().cloned().collect()
+    }
+    
+    /// Load events for a run (DIBL)
+    pub fn load_run_events(&self, run_id: &str) -> Result<Vec<crate::events::GovernanceEvent>> {
+        self.dible.load_run_events(run_id)
+    }
+    
+    /// Replay events for a run (DIBL)
+    pub fn replay_run_events(&self, run_id: &str) -> Result<Vec<crate::events::GovernanceEvent>> {
+        self.dible.replay_run(run_id)
+    }
+    
+    /// Get operator projection for a run (DIBL)
+    pub fn get_operator_projection(&self, run_id: &str) -> Result<crate::events::OperatorProjection> {
+        let events = self.dible.load_run_events(run_id)?;
+        Ok(crate::events::OperatorProjection::from_events(run_id, &events))
+    }
+    
+    /// Check if run has events (DIBL)
+    pub fn run_has_events(&self, run_id: &str) -> bool {
+        self.dible.run_has_events(run_id)
     }
     
     /// Get seat prompt

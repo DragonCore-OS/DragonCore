@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -15,10 +17,14 @@ pub trait ModelProvider: Send + Sync {
     async fn chat(&self, messages: Vec<Message>) -> Result<String>;
     
     /// Get provider name
-    fn name(&self) -> &str;
+    fn name(&self) -> &str {
+        "unknown"
+    }
     
     /// Get model name
-    fn model(&self) -> &str;
+    fn model(&self) -> &str {
+        "unknown"
+    }
 }
 
 /// Chat message
@@ -37,6 +43,7 @@ pub enum Role {
 }
 
 /// Kimi provider
+#[allow(dead_code)]
 pub struct KimiProvider {
     client: Client,
     api_key: String,
@@ -418,6 +425,7 @@ impl ModelRouter {
         provider.chat(messages).await
     }
     
+    #[allow(dead_code)]
     pub async fn chat_with_provider(&self, provider_name: &str, messages: Vec<Message>) -> Result<String> {
         for provider in &self.providers {
             if provider.name() == provider_name {
@@ -428,6 +436,7 @@ impl ModelRouter {
         anyhow::bail!("Provider not found: {}", provider_name)
     }
     
+    #[allow(dead_code)]
     pub fn list_providers(&self) -> Vec<&str> {
         self.providers.iter().map(|p| p.name()).collect()
     }

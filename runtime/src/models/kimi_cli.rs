@@ -55,7 +55,7 @@ impl ModelProvider for KimiCliProvider {
         
         // Run kimi CLI with print mode for non-interactive output
         let api_key = self.api_key.clone();
-        let timeout_secs = self.timeout_secs;
+        let _timeout_secs = self.timeout_secs; // Reserved for future timeout implementation
         
         let result = tokio::task::spawn_blocking(move || {
             Command::new("kimi")

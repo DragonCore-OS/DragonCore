@@ -81,6 +81,7 @@ impl TmuxManager {
     }
     
     /// Send a command to a tmux window
+    #[allow(dead_code)]
     pub fn send_command(&self, session_name: impl AsRef<str>, window_name: impl AsRef<str>, command: impl AsRef<str>) -> Result<()> {
         let full_session = format!("{}_{}", self.session_prefix, session_name.as_ref());
         let target = format!("{}:{}", full_session, window_name.as_ref());
@@ -106,6 +107,7 @@ impl TmuxManager {
     }
     
     /// Capture output from a tmux window
+    #[allow(dead_code)]
     pub fn capture_output(&self, session_name: impl AsRef<str>, window_name: impl AsRef<str>) -> Result<String> {
         let full_session = format!("{}_{}", self.session_prefix, session_name.as_ref());
         let target = format!("{}:{}", full_session, window_name.as_ref());
@@ -202,6 +204,7 @@ impl TmuxManager {
     }
     
     /// Check if a process is running in a window
+    #[allow(dead_code)]
     pub fn is_process_running(&self, session_name: impl AsRef<str>, window_name: impl AsRef<str>) -> Result<bool> {
         let full_session = format!("{}_{}", self.session_prefix, session_name.as_ref());
         let target = format!("{}:{}", full_session, window_name.as_ref());
@@ -225,6 +228,7 @@ impl TmuxManager {
     }
     
     /// Wait for a process to complete (with timeout)
+    #[allow(dead_code)]
     pub async fn wait_for_process(&self, session_name: impl AsRef<str>, window_name: impl AsRef<str>, timeout_secs: u64) -> Result<bool> {
         let session_name = session_name.as_ref();
         let window_name = window_name.as_ref();

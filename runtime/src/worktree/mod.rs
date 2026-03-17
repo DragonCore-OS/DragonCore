@@ -32,6 +32,7 @@ impl WorktreeManager {
     }
     
     /// Create a new worktree for a run
+    #[allow(dead_code)]
     pub fn create_worktree(&self, run_id: impl AsRef<str>, branch: impl AsRef<str>) -> Result<PathBuf> {
         let run_id = run_id.as_ref();
         let branch = branch.as_ref();
@@ -156,6 +157,7 @@ impl WorktreeManager {
     }
     
     /// List all worktrees
+    #[allow(dead_code)]
     pub fn list_worktrees(&self) -> Result<Vec<WorktreeInfo>> {
         let output = Command::new("git")
             .current_dir(&self.main_repo)
@@ -209,6 +211,7 @@ impl WorktreeManager {
     }
     
     /// Prune stale worktrees
+    #[allow(dead_code)]
     pub fn prune_worktrees(&self) -> Result<()> {
         let output = Command::new("git")
             .current_dir(&self.main_repo)
@@ -231,6 +234,7 @@ impl WorktreeManager {
     }
     
     /// Check if a worktree exists
+    #[allow(dead_code)]
     pub fn worktree_exists(&self, run_id: impl AsRef<str>) -> bool {
         self.get_worktree_path(run_id).exists()
     }
@@ -261,6 +265,7 @@ impl WorktreeManager {
     }
     
     /// Archive a worktree (compress and move to archive)
+    #[allow(dead_code)]
     pub fn archive_worktree(&self, run_id: impl AsRef<str>, archive_path: impl AsRef<Path>) -> Result<PathBuf> {
         let run_id = run_id.as_ref();
         let worktree_path = self.get_worktree_path(run_id);
@@ -301,6 +306,7 @@ impl WorktreeManager {
 
 /// Information about a worktree
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct WorktreeInfo {
     pub path: PathBuf,
     pub head: String,
@@ -309,6 +315,7 @@ pub struct WorktreeInfo {
 
 /// Execution context for a governance run
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct RunContext {
     pub run_id: String,
     pub worktree_path: PathBuf,
@@ -336,6 +343,7 @@ impl RunContext {
     }
     
     /// Read artifact file
+    #[allow(dead_code)]
     pub fn read_artifact(&self, name: impl AsRef<str>) -> Result<String> {
         let artifacts_path = self.worktree_path.join(".dragoncore").join("artifacts");
         let file_path = artifacts_path.join(name.as_ref());
@@ -345,6 +353,7 @@ impl RunContext {
     }
     
     /// Check if artifact exists
+    #[allow(dead_code)]
     pub fn artifact_exists(&self, name: impl AsRef<str>) -> bool {
         let artifacts_path = self.worktree_path.join(".dragoncore").join("artifacts");
         artifacts_path.join(name.as_ref()).exists()

@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 
@@ -427,6 +427,7 @@ fn parse_seat(s: &str) -> Result<Seat> {
 
 /// Red line violation types
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub enum RedLineViolation {
     AuthorityViolation,
     FakeClosure,
@@ -445,6 +446,7 @@ pub struct StabilityMetrics {
 
 impl StabilityMetrics {
     /// Calculate stability score (0-100)
+    #[allow(dead_code)]
     pub fn stability_score(&self) -> u32 {
         if self.total_runs == 0 {
             return 100;

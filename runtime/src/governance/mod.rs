@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::persistence::{PersistedRun, PersistedRunStatus, RunEvent, RunMetrics, RunStore, VetoRecord};
+use crate::persistence::{PersistedRun, PersistedRunStatus, RunStore, VetoRecord};
 
 /// Governance authority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -112,6 +112,7 @@ pub enum Layer {
 }
 
 impl Layer {
+    #[allow(dead_code)]
     pub fn name(&self) -> &'static str {
         match self {
             Layer::SevenStars => "北斗七星",
@@ -206,6 +207,7 @@ impl GovernanceEngine {
     }
     
     /// Record seat participation with persistence
+    #[allow(dead_code)]
     pub fn record_participation(&mut self, run_id: &str, seat: Seat) -> Result<()> {
         let run = self.get_run_mut(run_id)?;
         
@@ -224,6 +226,7 @@ impl GovernanceEngine {
     }
     
     /// Execute seat action with persistence
+    #[allow(dead_code)]
     pub fn execute_seat(&mut self, run_id: &str, seat: Seat, output: &str) -> Result<()> {
         let run = self.get_run_mut(run_id)?;
         
@@ -333,6 +336,7 @@ impl GovernanceEngine {
     }
     
     /// List active runs
+    #[allow(dead_code)]
     pub fn list_active_runs(&self) -> Vec<&PersistedRun> {
         self.cache.values()
             .filter(|r| matches!(r.status, 
@@ -343,11 +347,13 @@ impl GovernanceEngine {
     }
     
     /// Get run status
+    #[allow(dead_code)]
     pub fn get_run_status(&self, run_id: &str) -> Option<PersistedRunStatus> {
         self.cache.get(run_id).map(|r| r.status.clone())
     }
     
     /// Check if run exists
+    #[allow(dead_code)]
     pub fn run_exists(&self, run_id: &str) -> bool {
         if self.cache.contains_key(run_id) {
             return true;
@@ -368,6 +374,7 @@ pub fn all_seats() -> Vec<Seat> {
 }
 
 /// Get seats by layer
+#[allow(dead_code)]
 pub fn seats_by_layer(layer: Layer) -> Vec<Seat> {
     all_seats().into_iter()
         .filter(|s| s.layer() == layer)
