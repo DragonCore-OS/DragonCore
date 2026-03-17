@@ -3,12 +3,16 @@
 use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::config::ProviderConfig;
+use crate::config::{ProviderConfig, ProviderType};
 
 mod kimi_cli;
 pub use kimi_cli::KimiCliProvider;
+
+mod openai_compatible;
+pub use openai_compatible::OpenAiCompatibleProvider;
 
 /// Model provider trait
 #[async_trait::async_trait]
@@ -381,9 +385,9 @@ struct QwenChoice {
 
 /// Model provider factory
 pub fn create_provider(name: &str, config: &ProviderConfig) -> Result<Box<dyn ModelProvider>> {
-    match name {
-        "kimi" => Ok(Box::new(KimiProvider::new(config)?)),
-        "kimi-cli" => {
+    match config.provider_type {
+        ProviderType::Kimi => Ok(Box::new(KimiProvider::new(config)?)),
+        ProviderType::KimiCli => {
             // Use Kimi CLI for Kimi Code 699 membership keys
             KimiCliProvider::check_cli()?;
             Ok(Box::new(KimiCliProvider::new(
@@ -391,53 +395,83 @@ pub fn create_provider(name: &str, config: &ProviderConfig) -> Result<Box<dyn Mo
                 config.timeout,
             )))
         }
-        "deepseek" => Ok(Box::new(DeepSeekProvider::new(config)?)),
-        "qwen" => Ok(Box::new(QwenProvider::new(config)?)),
-        _ => anyhow::bail!("Unknown provider: {}", name),
+        ProviderType::DeepSeek => Ok(Box::new(DeepSeekProvider::new(config)?)),
+        ProviderType::Qwen => Ok(Box::new(QwenProvider::new(config)?)),
+        ProviderType::OpenAiCompatible => Ok(Box::new(OpenAiCompatibleProvider::new(config)?)),
     }
 }
 
-/// Multi-provider router
+/// Multi-provider router with seat-based model selection
 pub struct ModelRouter {
-    providers: Vec<Box<dyn ModelProvider>>,
-    default_provider: usize,
+    /// Provider name -> provider instance
+    providers: HashMap<String, Box<dyn ModelProvider>>,
+    /// Default provider name
+    default_provider: String,
+    /// Seat name -> provider name mapping
+    seat_mappings: HashMap<String, String>,
 }
 
 impl ModelRouter {
     pub fn new() -> Self {
         Self {
-            providers: Vec::new(),
-            default_provider: 0,
+            providers: HashMap::new(),
+            default_provider: "default".to_string(),
+            seat_mappings: HashMap::new(),
         }
     }
     
-    pub fn add_provider(&mut self, provider: Box<dyn ModelProvider>) {
-        self.providers.push(provider);
+    /// Add a provider with a name
+    pub fn add_provider(&mut self, name: impl Into<String>, provider: Box<dyn ModelProvider>) {
+        self.providers.insert(name.into(), provider);
     }
     
-    pub async fn chat(&self, messages: Vec<Message>) -> Result<String> {
-        if self.providers.is_empty() {
-            anyhow::bail!("No providers configured");
-        }
-        
-        // Try default provider first
-        let provider = &self.providers[self.default_provider];
-        provider.chat(messages).await
+    /// Set the default provider
+    pub fn set_default_provider(&mut self, name: impl Into<String>) {
+        self.default_provider = name.into();
     }
     
-    #[allow(dead_code)]
-    pub async fn chat_with_provider(&self, provider_name: &str, messages: Vec<Message>) -> Result<String> {
-        for provider in &self.providers {
-            if provider.name() == provider_name {
-                return provider.chat(messages).await;
+    /// Configure seat-to-model mappings
+    pub fn configure_seat_mappings(&mut self, mappings: HashMap<String, String>) {
+        self.seat_mappings = mappings;
+    }
+    
+    /// Get provider for a specific seat
+    fn get_provider_for_seat(&self, seat: Option<&str>) -> Result<&Box<dyn ModelProvider>> {
+        // If seat is specified and has a mapping, use it
+        if let Some(seat_name) = seat {
+            if let Some(provider_name) = self.seat_mappings.get(seat_name) {
+                if let Some(provider) = self.providers.get(provider_name) {
+                    return Ok(provider);
+                }
             }
         }
         
-        anyhow::bail!("Provider not found: {}", provider_name)
+        // Fall back to default provider
+        self.providers.get(&self.default_provider)
+            .or_else(|| self.providers.values().next())
+            .ok_or_else(|| anyhow::anyhow!("No providers configured"))
     }
     
-    #[allow(dead_code)]
+    /// Chat with automatic provider selection based on seat
+    pub async fn chat(&self, messages: Vec<Message>, seat: Option<&str>) -> Result<String> {
+        let provider = self.get_provider_for_seat(seat)?;
+        provider.chat(messages).await
+    }
+    
+    /// Chat with a specific provider by name
+    pub async fn chat_with_provider(&self, provider_name: &str, messages: Vec<Message>) -> Result<String> {
+        let provider = self.providers.get(provider_name)
+            .ok_or_else(|| anyhow::anyhow!("Provider not found: {}", provider_name))?;
+        provider.chat(messages).await
+    }
+    
+    /// List available providers
     pub fn list_providers(&self) -> Vec<&str> {
-        self.providers.iter().map(|p| p.name()).collect()
+        self.providers.keys().map(|s: &String| s.as_str()).collect()
+    }
+    
+    /// Get seat mappings
+    pub fn get_seat_mappings(&self) -> &HashMap<String, String> {
+        &self.seat_mappings
     }
 }

@@ -15,11 +15,30 @@ pub struct Config {
     /// Model providers
     pub providers: HashMap<String, ProviderConfig>,
     
+    /// Seat to model mapping (multi-model support)
+    #[serde(default)]
+    pub seat_models: Option<SeatModelMapping>,
+    
     /// Execution environment
     pub execution: ExecutionConfig,
     
     /// Ledger configuration
     pub ledger: LedgerConfig,
+}
+
+/// Seat model mapping for multi-model support
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SeatModelMapping {
+    /// Mapping from seat name to provider name
+    #[serde(flatten)]
+    pub mapping: HashMap<String, String>,
+    /// Default provider for unspecified seats
+    #[serde(default = "default_provider")]
+    pub default: String,
+}
+
+fn default_provider() -> String {
+    "default".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -49,6 +68,15 @@ pub struct ProviderConfig {
     pub base_url: String,
     pub model: String,
     pub timeout: u64,
+    // Multi-model support fields (optional)
+    #[serde(default)]
+    pub capability: Option<String>,    // high | medium | low
+    #[serde(default)]
+    pub cost_tier: Option<String>,     // free | low | medium | high
+    #[serde(default)]
+    pub speed: Option<String>,         // fast | medium | slow
+    #[serde(default)]
+    pub use_case: Option<Vec<String>>, // e.g., ["coding", "analysis"]
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -58,6 +86,7 @@ pub enum ProviderType {
     KimiCli, // For Kimi Code 699 membership keys
     DeepSeek,
     Qwen,
+    OpenAiCompatible, // For local/self-hosted models like GPT-OSS-120B
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,6 +135,7 @@ impl Default for Config {
                 strict_mode: true,
             },
             providers: HashMap::new(),
+            seat_models: None,
             execution: ExecutionConfig {
                 tmux_prefix: "dragoncore".to_string(),
                 worktree_base: data_dir.join("worktrees"),
@@ -171,6 +201,10 @@ impl Config {
                 base_url: "https://api.kimi.com/coding/v1".to_string(),
                 model: "kimi-for-coding".to_string(),
                 timeout: 120, // CLI mode may take longer
+                capability: Some("high".to_string()),
+                cost_tier: Some("medium".to_string()),
+                speed: Some("fast".to_string()),
+                use_case: Some(vec!["coding".to_string(), "chat".to_string()]),
             });
         }
         
@@ -181,6 +215,10 @@ impl Config {
                 base_url: "https://api.deepseek.com/v1".to_string(),
                 model: "deepseek-chat".to_string(),
                 timeout: 60,
+                capability: Some("high".to_string()),
+                cost_tier: Some("low".to_string()),
+                speed: Some("fast".to_string()),
+                use_case: Some(vec!["coding".to_string(), "analysis".to_string()]),
             });
         }
         
@@ -191,6 +229,10 @@ impl Config {
                 base_url: "https://dashscope.aliyuncs.com/api/v1".to_string(),
                 model: "qwen-max".to_string(),
                 timeout: 60,
+                capability: Some("high".to_string()),
+                cost_tier: Some("medium".to_string()),
+                speed: Some("fast".to_string()),
+                use_case: Some(vec!["general".to_string(), "coding".to_string()]),
             });
         }
         

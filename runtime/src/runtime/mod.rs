@@ -67,12 +67,24 @@ impl DragonCoreRuntime {
             
             match crate::models::create_provider(provider_name, provider_config) {
                 Ok(provider) => {
-                    model_router.add_provider(provider);
+                    model_router.add_provider(name.clone(), provider);
                     tracing::info!("Added model provider: {} (type: {:?})", name, provider_config.provider_type);
                 }
                 Err(e) => {
                     tracing::warn!("Failed to create provider {}: {}", name, e);
                 }
+            }
+        }
+        
+        // Configure seat-to-model mappings for multi-model support
+        if let Some(ref seat_models) = config.seat_models {
+            model_router.configure_seat_mappings(seat_models.mapping.clone());
+            model_router.set_default_provider(&seat_models.default);
+            tracing::info!("Configured seat model mappings: {:?}", model_router.get_seat_mappings());
+        } else if !config.providers.is_empty() {
+            // Set first provider as default if no mappings configured
+            if let Some(first_provider) = config.providers.keys().next() {
+                model_router.set_default_provider(first_provider.clone());
             }
         }
         
@@ -222,9 +234,9 @@ impl DragonCoreRuntime {
             },
         ];
         
-        // Send to model
+        // Send to model with seat-based provider selection
         let router = self.model_router.read().await;
-        let response = router.chat(messages).await?;
+        let response = router.chat(messages, Some(&seat_str)).await?;
         
         // Store output in worktree
         if let Some(context) = self.active_runs.read().await.get(run_id) {

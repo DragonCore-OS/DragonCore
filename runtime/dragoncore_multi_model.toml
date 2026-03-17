@@ -1,0 +1,125 @@
+# DragonCore Multi-Model Configuration
+# v0.3.0-beta.2 - Multi-Model Support
+
+[runtime]
+name = "dragoncore"
+version = "0.3.0-beta.2"
+data_dir = "./runtime_state"
+log_level = "info"
+
+[governance]
+constitution_path = "./runtime_state/constitution"
+escalation_timeout = 300
+strict_mode = true
+
+# ============================================
+# Model Providers - Multi-Model Support
+# ============================================
+
+# Provider 1: Local GPT-OSS-120B (High capability, free)
+[providers.local_gpt_oss_120b]
+provider_type = "openai_compatible"  # Generic OpenAI-compatible API
+api_key = "not-needed-for-local"  # Local server doesn't need auth
+base_url = "http://localhost:8000/v1"
+model = "openai/gpt-oss-120b"
+timeout = 120
+capability = "high"      # high | medium | low
+cost_tier = "free"       # free | low | medium | high
+speed = "medium"         # fast | medium | slow
+use_case = ["complex_reasoning", "code_generation", "analysis"]
+
+# Provider 2: Kimi CLI (Fast, for members)
+[providers.kimi_cli_fast]
+provider_type = "kimi_cli"
+api_key = "${KIMI_API_KEY}"  # Will read from env
+base_url = "https://api.kimi.com/coding/v1"
+model = "kimi-for-coding"
+timeout = 60
+capability = "high"
+cost_tier = "medium"
+speed = "fast"
+use_case = ["quick_tasks", "iterative_work", "chat"]
+
+# Provider 3: Kimi Standard API (Fallback)
+[providers.kimi_api]
+provider_type = "kimi"
+api_key = ""  # User to fill
+base_url = "https://api.moonshot.cn/v1"
+model = "kimi-for-coding"
+timeout = 60
+capability = "high"
+cost_tier = "medium"
+speed = "fast"
+use_case = ["general", "coding", "analysis"]
+
+# ============================================
+# Seat Model Mapping
+# ============================================
+[seat_models]
+# Core governance seats use high-capability model
+"Tianshu" = "local_gpt_oss_120b"      # CEO - final decisions need best model
+"Tianxuan" = "local_gpt_oss_120b"     # Risk - needs deep analysis
+"Tianji" = "local_gpt_oss_120b"       # CTO - technical decisions
+"Tianquan" = "kimi_cli_fast"          # CSO - orchestration, can be fast
+"Yuheng" = "local_gpt_oss_120b"       # Quality gate - needs careful review
+"Kaiyang" = "kimi_cli_fast"           # Implementation review - can be fast
+"Yaoguang" = "kimi_cli_fast"          # Innovation - iterative, fast
+
+# Four Symbols - exploration and testing
+"Qinglong" = "kimi_cli_fast"          # Exploration - quick iterations
+"Baihu" = "local_gpt_oss_120b"        # Red team - needs thorough analysis
+"Zhuque" = "kimi_cli_fast"            # Narrative - faster is better
+"Xuanwu" = "local_gpt_oss_120b"       # Stability - needs careful analysis
+
+# Eight Immortals - specialized functions
+"Yangjian" = "local_gpt_oss_120b"     # Quality inspection - thorough
+"Baozheng" = "local_gpt_oss_120b"     # Audit - needs deep analysis
+"Zhongkui" = "kimi_cli_fast"          # Purge - quick action
+"Luban" = "local_gpt_oss_120b"        # Platform - technical depth
+"Zhugeliang" = "local_gpt_oss_120b"   # Strategy - complex planning
+"Nezha" = "kimi_cli_fast"             # Rapid deployment - speed
+"Xiwangmu" = "local_gpt_oss_120b"     # Resource control - important
+"Fengdudadi" = "local_gpt_oss_120b"   # Termination - final, needs care
+
+# Default model for unspecified seats
+default = "local_gpt_oss_120b"
+
+# ============================================
+# Model Selection Strategy
+# ============================================
+[model_selection]
+# Auto-select based on task complexity
+auto_select = true
+
+# Selection rules (priority order)
+[[model_selection.rules]]
+name = "quick_tasks"
+condition = "task_length < 100 and not complex"
+preferred = ["kimi_cli_fast"]
+fallback = ["local_gpt_oss_120b"]
+
+[[model_selection.rules]]
+name = "complex_analysis"
+condition = "task_type == 'analysis' or task_type == 'review'"
+preferred = ["local_gpt_oss_120b"]
+fallback = ["kimi_cli_fast"]
+
+[[model_selection.rules]]
+name = "code_generation"
+condition = "task_type == 'code'"
+preferred = ["local_gpt_oss_120b"]
+fallback = ["kimi_cli_fast"]
+
+# ============================================
+# Execution Config
+# ============================================
+[execution]
+tmux_prefix = "dragoncore"
+worktree_base = "./runtime_state/worktrees"
+max_concurrent_agents = 19
+isolation_enabled = true
+
+[ledger]
+storage_path = "./runtime_state/ledger"
+auto_archive_threshold = 100
+retention_days = 365
