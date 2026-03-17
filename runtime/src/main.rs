@@ -274,13 +274,25 @@ async fn main() -> Result<()> {
                     Err(e) => println!("Error getting run status: {}", e),
                 }
             } else {
+                // Show all runs from persistence, not just active in memory
+                let all_runs = runtime.list_all_runs().await;
                 let active = runtime.list_active_runs().await;
-                println!("Active runs: {}", active.len());
-                for run_id in active {
-                    match runtime.get_run_status(&run_id).await {
-                        Ok(Some(state)) => println!("  {}: {:?}", run_id, state),
-                        Ok(None) => println!("  {}: not found", run_id),
-                        Err(e) => println!("  {}: error - {}", run_id, e),
+                
+                println!("Total runs in storage: {}", all_runs.len());
+                println!("Active runs (in memory): {}", active.len());
+                println!();
+                
+                if !all_runs.is_empty() {
+                    println!("All runs:");
+                    for run_id in &all_runs {
+                        match runtime.get_run_status(&run_id).await {
+                            Ok(Some(state)) => {
+                                let active_marker = if active.contains(run_id) { " [active]" } else { "" };
+                                println!("  {}: {:?}{}", run_id, state, active_marker);
+                            }
+                            Ok(None) => println!("  {}: not found", run_id),
+                            Err(e) => println!("  {}: error - {}", run_id, e),
+                        }
                     }
                 }
             }

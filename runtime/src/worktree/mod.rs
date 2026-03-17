@@ -73,6 +73,36 @@ impl WorktreeManager {
     /// Create a new worktree from current HEAD (for new runs)
     pub fn create_worktree_from_head(&self, run_id: impl AsRef<str>) -> Result<PathBuf> {
         let run_id = run_id.as_ref();
+        
+        // Check if we're in a git repository
+        let git_check = Command::new("git")
+            .current_dir(&self.main_repo)
+            .args(&["rev-parse", "--git-dir"])
+            .output();
+        
+        if git_check.is_err() || !git_check.unwrap().status.success() {
+            anyhow::bail!(
+                "Not a git repository. DragonCore requires:\n\
+                 1. git init\n\
+                 2. At least one commit (git add && git commit)\n\
+                 Please initialize a git repository first."
+            );
+        }
+        
+        // Check if we have at least one commit
+        let head_check = Command::new("git")
+            .current_dir(&self.main_repo)
+            .args(&["rev-parse", "HEAD"])
+            .output()
+            .context("Failed to check git HEAD")?;
+        
+        if !head_check.status.success() {
+            anyhow::bail!(
+                "No commits found. DragonCore requires at least one commit.\n\
+                 Please run: git add . && git commit -m 'initial commit'"
+            );
+        }
+        
         let worktree_path = self.base_path.join(run_id);
         
         // Ensure base path exists

@@ -101,6 +101,29 @@ impl DragonCoreRuntime {
         let input_type = input_type.into();
         let task = task.into();
         
+        // Check if providers are configured
+        if self.config.providers.is_empty() {
+            anyhow::bail!(
+                "No model providers configured.\n\n\
+                To use DragonCore, you need to configure at least one AI provider.\n\
+                Edit dragoncore.toml and add your API keys:\n\n\
+                [providers.kimi]\n\
+                provider_type = \"kimi\"\n\
+                api_key = \"your-api-key\"\n\
+                base_url = \"https://api.moonshot.cn/v1\"\n\
+                model = \"kimi-for-coding\"\n\
+                timeout = 60\n\n\
+                Or for Kimi CLI (if you have Kimi Code membership):\n\
+                [providers.kimi-cli]\n\
+                provider_type = \"kimi_cli\"\n\
+                api_key = \"your-api-key\"\n\
+                base_url = \"https://api.kimi.com/coding/v1\"\n\
+                model = \"kimi-for-coding\"\n\
+                timeout = 60\n\n\
+                Get your API key from: https://platform.moonshot.cn/"
+            );
+        }
+        
         tracing::info!("Initializing governance run: {}", run_id);
         
         // Start ledger first (persist immediately)
@@ -412,6 +435,12 @@ impl DragonCoreRuntime {
     pub async fn list_active_runs(&self) -> Vec<String> {
         let active = self.active_runs.read().await;
         active.keys().cloned().collect()
+    }
+    
+    /// List all runs from persistence
+    pub async fn list_all_runs(&self) -> Vec<String> {
+        let gov = self.governance.read().await;
+        gov.list_runs().iter().map(|r| r.run_id.clone()).collect()
     }
     
     /// Load events for a run (DIBL)
