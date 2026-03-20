@@ -128,6 +128,18 @@ pub enum GovernanceEventType {
     RollbackTriggered,
     ArchiveCompleted,
     TerminateTriggered,
+    
+    // AI Entity Lifecycle Events
+    EntityCreated,
+    EntityActivated,
+    EntityLimited,
+    EntityUnderReview,
+    EntityDemoted,
+    EntitySuspended,
+    EntityArchived,
+    EntityTerminated,
+    EntityStatusChanged,
+    EntityPromoted,
 }
 
 /// A governance event
@@ -155,6 +167,29 @@ pub struct GovernanceEvent {
     pub provider: Option<String>,
 }
 
+impl Default for GovernanceEvent {
+    fn default() -> Self {
+        Self {
+            event_id: Uuid::new_v4(),
+            run_id: String::new(),
+            seat_id: None,
+            channel: EventChannel::Control,
+            event_type: GovernanceEventType::RunCreated,
+            scope: EventScope::Internal,
+            severity: Severity::Info,
+            summary: String::new(),
+            details_ref: None,
+            artifact_refs: Vec::new(),
+            created_at: Utc::now(),
+            correlation_id: None,
+            parent_event_id: None,
+            actor: String::new(),
+            trigger_context: None,
+            provider: None,
+        }
+    }
+}
+
 impl GovernanceEvent {
     /// Create a new governance event
     pub fn new(
@@ -178,6 +213,32 @@ impl GovernanceEvent {
             correlation_id: None,
             parent_event_id: None,
             actor: actor.into(),
+            trigger_context: None,
+            provider: None,
+        }
+    }
+    
+    /// Create an entity event
+    pub fn entity_event(
+        event_type: GovernanceEventType,
+        summary: impl Into<String>,
+        entity_id: Option<Uuid>,
+    ) -> Self {
+        Self {
+            event_id: Uuid::new_v4(),
+            run_id: entity_id.map(|id| id.to_string()).unwrap_or_default(),
+            seat_id: None,
+            channel: EventChannel::Control,
+            event_type,
+            scope: EventScope::Internal,
+            severity: Severity::Info,
+            summary: summary.into(),
+            details_ref: None,
+            artifact_refs: Vec::new(),
+            created_at: Utc::now(),
+            correlation_id: None,
+            parent_event_id: None,
+            actor: "entity_system".to_string(),
             trigger_context: None,
             provider: None,
         }
@@ -545,6 +606,11 @@ impl OperatorProjection {
                     final_outcome = Some("Terminated".to_string());
                     last_significant_event = Some(format!("Terminated: {}", event.summary));
                 }
+                // Entity lifecycle events - for PR-1, we just record them
+                _ => {
+                    // Entity events are tracked but don't change run projection
+                    last_significant_event = Some(event.summary.clone());
+                }
             }
         }
         
@@ -826,5 +892,127 @@ mod tests {
         assert_eq!(events[0].severity, Severity::Warn);
         assert_eq!(events[1].severity, Severity::Critical);
         assert_eq!(events[2].severity, Severity::Warn);
+    }
+    
+    #[test]
+    fn test_risk_raised_event_projection() {
+        // Test: RiskRaised events should appear in operator projection
+        let events = vec![
+            GovernanceEvent::new("r1", GovernanceEventType::RunCreated, EventChannel::Control, "system")
+                .with_scope(EventScope::OperatorVisible),
+            GovernanceEvent::new("r1", GovernanceEventType::SeatStarted, EventChannel::Control, "Baihu")
+                .with_seat("Baihu")
+                .with_scope(EventScope::OperatorVisible),
+            GovernanceEvent::new("r1", GovernanceEventType::RiskRaised, EventChannel::Security, "Baihu")
+                .with_seat("Baihu")
+                .with_scope(EventScope::OperatorVisible)
+                .with_severity(Severity::Warn)
+                .with_summary("[PERSISTENCE] Risk of data loss in rollback"),
+            GovernanceEvent::new("r1", GovernanceEventType::FinalGateOpened, EventChannel::Control, "Tianshu")
+                .with_seat("Tianshu")
+                .with_scope(EventScope::OperatorVisible),
+            GovernanceEvent::new("r1", GovernanceEventType::DecisionCommitted, EventChannel::Control, "Tianshu")
+                .with_seat("Tianshu")
+                .with_scope(EventScope::Exportable)
+                .with_summary("APPROVED"),
+        ];
+        
+        let proj = OperatorProjection::from_events("r1", &events);
+        
+        assert_eq!(proj.run_id, "r1");
+        assert_eq!(proj.current_phase, "Decided");
+        assert_eq!(proj.open_risks.len(), 1);
+        assert_eq!(proj.open_risks[0], "[PERSISTENCE] Risk of data loss in rollback");
+        assert_eq!(proj.event_count, 5);
+    }
+    
+    #[test]
+    fn test_provider_tracking_in_events() {
+        // Test: All event types should support provider tracking
+        let events = vec![
+            GovernanceEvent::new("r1", GovernanceEventType::RunCreated, EventChannel::Control, "system")
+                .with_provider("kimi"),
+            GovernanceEvent::new("r1", GovernanceEventType::SeatStarted, EventChannel::Control, "Tianquan")
+                .with_seat("Tianquan")
+                .with_provider("gpt_oss_120b"),
+            GovernanceEvent::new("r1", GovernanceEventType::RiskRaised, EventChannel::Security, "Baihu")
+                .with_seat("Baihu")
+                .with_provider("kimi")
+                .with_severity(Severity::Warn),
+            GovernanceEvent::new("r1", GovernanceEventType::VetoExercised, EventChannel::Security, "Yuheng")
+                .with_seat("Yuheng")
+                .with_provider("kimi"),
+            GovernanceEvent::new("r1", GovernanceEventType::FinalGateOpened, EventChannel::Control, "Tianshu")
+                .with_seat("Tianshu")
+                .with_provider("gpt_oss_120b"),
+            GovernanceEvent::new("r1", GovernanceEventType::DecisionCommitted, EventChannel::Control, "Tianshu")
+                .with_seat("Tianshu")
+                .with_provider("gpt_oss_120b"),
+            GovernanceEvent::new("r1", GovernanceEventType::ArchiveCompleted, EventChannel::Ops, "Yaoguang")
+                .with_seat("Yaoguang")
+                .with_provider("kimi"),
+            GovernanceEvent::new("r1", GovernanceEventType::TerminateTriggered, EventChannel::Security, "Fengdudadi")
+                .with_seat("Fengdudadi")
+                .with_provider("kimi")
+                .with_severity(Severity::Critical),
+        ];
+        
+        // Verify provider is set correctly for each event
+        assert_eq!(events[0].provider, Some("kimi".to_string()));
+        assert_eq!(events[1].provider, Some("gpt_oss_120b".to_string()));
+        assert_eq!(events[2].provider, Some("kimi".to_string()));
+        assert_eq!(events[3].provider, Some("kimi".to_string()));
+        assert_eq!(events[4].provider, Some("gpt_oss_120b".to_string()));
+        assert_eq!(events[5].provider, Some("gpt_oss_120b".to_string()));
+        assert_eq!(events[6].provider, Some("kimi".to_string()));
+        assert_eq!(events[7].provider, Some("kimi".to_string()));
+    }
+    
+    #[test]
+    fn test_complete_governance_lifecycle_events() {
+        // Test: Complete lifecycle with all event types in correct order
+        let temp_dir = TempDir::new().unwrap();
+        let store = JsonlEventStore::new(temp_dir.path()).unwrap();
+        let manager = DiblManager::new(Arc::new(store));
+        
+        let run_id = "complete-lifecycle";
+        
+        // Simulate complete governance flow
+        let flow = vec![
+            (GovernanceEventType::RunCreated, EventChannel::Control, None as Option<&str>),
+            (GovernanceEventType::SeatStarted, EventChannel::Control, Some("Tianquan")),
+            (GovernanceEventType::SeatCompleted, EventChannel::Research, Some("Tianquan")),
+            (GovernanceEventType::SeatStarted, EventChannel::Control, Some("Baihu")),
+            (GovernanceEventType::RiskRaised, EventChannel::Security, Some("Baihu")),
+            (GovernanceEventType::SeatCompleted, EventChannel::Research, Some("Baihu")),
+            (GovernanceEventType::SeatStarted, EventChannel::Control, Some("Yuheng")),
+            (GovernanceEventType::SeatCompleted, EventChannel::Research, Some("Yuheng")),
+            (GovernanceEventType::FinalGateOpened, EventChannel::Control, Some("Tianshu")),
+            (GovernanceEventType::DecisionCommitted, EventChannel::Control, Some("Tianshu")),
+            (GovernanceEventType::ArchiveCompleted, EventChannel::Ops, Some("Yaoguang")),
+        ];
+        
+        for (event_type, channel, seat) in flow {
+            let mut event = GovernanceEvent::new(run_id, event_type, channel, seat.unwrap_or("system"));
+            if let Some(s) = seat {
+                event = event.with_seat(s);
+            }
+            manager.emit(event).unwrap();
+        }
+        
+        // Load and verify
+        let loaded = manager.load_run_events(run_id).unwrap();
+        assert_eq!(loaded.len(), 11);
+        
+        // Verify order
+        assert_eq!(loaded[0].event_type, GovernanceEventType::RunCreated);
+        assert_eq!(loaded[4].event_type, GovernanceEventType::RiskRaised);
+        assert_eq!(loaded[8].event_type, GovernanceEventType::FinalGateOpened);
+        assert_eq!(loaded[10].event_type, GovernanceEventType::ArchiveCompleted);
+        
+        // Verify projection
+        let proj = OperatorProjection::from_events(run_id, &loaded);
+        assert_eq!(proj.current_phase, "Archived");
+        assert_eq!(proj.open_risks.len(), 1);
     }
 }

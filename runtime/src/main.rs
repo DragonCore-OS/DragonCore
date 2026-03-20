@@ -6,6 +6,7 @@ use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod config;
+mod entity;
 mod events;
 mod governance;
 mod ledger;
@@ -14,6 +15,7 @@ mod persistence;
 mod runtime;
 mod tmux;
 mod worktree;
+mod meeting;
 
 use config::Config;
 use governance::Seat;
@@ -167,6 +169,18 @@ enum Commands {
     Seats,
     
     /// Clean up all resources
+    Meeting {
+        #[command(subcommand)]
+        command: MeetingCommand,
+    },
+    
+    /// Entity management
+    Entity {
+        #[command(subcommand)]
+        command: EntityCommand,
+    },
+    
+    // Clean up all resources
     Cleanup,
 }
 
@@ -446,6 +460,130 @@ async fn main() -> Result<()> {
             println!("Cleanup complete");
             Ok(())
         }
+        
+        Commands::Entity { command } => {
+            use crate::entity::{EntityStatus, StateTransitionRequest};
+            
+            match command {
+                EntityCommand::Create { name, role, department } => {
+                    println!("Creating entity: {} with role: {} in department: {}", name, role, department);
+                    // TODO: Implement entity creation
+                    Ok(())
+                }
+                EntityCommand::Status { entity_id } => {
+                    println!("Showing status for entity: {}", entity_id);
+                    // TODO: Implement entity status query
+                    Ok(())
+                }
+                EntityCommand::Transition { entity_id, to_status, reason, initiated_by, approved_by } => {
+                    println!("Transitioning entity: {} to status: {}", entity_id, to_status);
+                    println!("Reason: {}", reason);
+                    println!("Initiated by: {}", initiated_by);
+                    if let Some(approver) = approved_by {
+                        println!("Approved by: {}", approver);
+                    }
+                    // TODO: Implement status transition
+                    Ok(())
+                }
+                EntityCommand::List { filter } => {
+                    println!("Listing entities with filter: {}", filter);
+                    // TODO: Implement entity listing
+                    Ok(())
+                }
+                EntityCommand::Promote { entity_id, to_rank, reason, initiated_by } => {
+                    println!("Promoting entity: {} to rank: {}", entity_id, to_rank);
+                    println!("Reason: {}", reason);
+                    println!("Initiated by: {}", initiated_by);
+                    // TODO: Implement promotion
+                    Ok(())
+                }
+                EntityCommand::Demote { entity_id, reason, initiated_by } => {
+                    println!("Demoting entity: {}", entity_id);
+                    println!("Reason: {}", reason);
+                    println!("Initiated by: {}", initiated_by);
+                    // TODO: Implement demotion
+                    Ok(())
+                }
+                EntityCommand::Suspend { entity_id, reason, initiated_by } => {
+                    println!("Suspending entity: {}", entity_id);
+                    println!("Reason: {}", reason);
+                    println!("Initiated by: {}", initiated_by);
+                    // TODO: Implement suspension
+                    Ok(())
+                }
+                EntityCommand::Terminate { entity_id, reason, initiated_by, approved_by } => {
+                    println!("Terminating entity: {}", entity_id);
+                    println!("Reason: {}", reason);
+                    println!("Initiated by: {}", initiated_by);
+                    println!("Approved by: {}", approved_by);
+                    // TODO: Implement termination
+                    Ok(())
+                }
+            }
+        }
+        Commands::Meeting { command } => {
+            match command {
+                MeetingCommand::Open { run_id, topic, moderator, required_seats } => {
+                    println!("Opening meeting for run: {} with topic: {}", run_id, topic);
+                    println!("Moderator: {}", moderator);
+                    if let Some(seats) = required_seats {
+                        println!("Required seats: {}", seats);
+                    }
+                    Ok(())
+                }
+                MeetingCommand::Assemble { run_id } => {
+                    println!("Assembling meeting for run: {}", run_id);
+                    Ok(())
+                }
+                MeetingCommand::RollCall { run_id } => {
+                    println!("Roll call for run: {}", run_id);
+                    Ok(())
+                }
+                MeetingCommand::TopicLock { run_id, confirmation } => {
+                    println!("Locking topic for run: {}", run_id);
+                    println!("CEO confirmation: {}", confirmation);
+                    Ok(())
+                }
+                MeetingCommand::RequestSpeak { run_id, seat, intent, confidence, urgency, reason } => {
+                    println!("Speak request from {} for run: {}", seat, run_id);
+                    println!("Intent: {}, Reason: {}", intent, reason);
+                    Ok(())
+                }
+                MeetingCommand::ScheduleRound { run_id, round, speakers } => {
+                    println!("Scheduling round {} for run: {}", round, run_id);
+                    Ok(())
+                }
+                MeetingCommand::Speak { run_id, seat, content_file } => {
+                    println!("Speaking turn for {} in run: {}", seat, run_id);
+                    Ok(())
+                }
+                MeetingCommand::ForceSpeak { run_id, seat, reason } => {
+                    println!("Forcing {} to speak in run: {}", seat, run_id);
+                    println!("Reason: {}", reason);
+                    Ok(())
+                }
+                MeetingCommand::UpdateStance { run_id, seat, position, confidence, supports, challenges } => {
+                    println!("Updating stance for {} in run: {}", seat, run_id);
+                    Ok(())
+                }
+                MeetingCommand::ChallengeWindow { run_id } => {
+                    println!("Opening challenge window for run: {}", run_id);
+                    Ok(())
+                }
+                MeetingCommand::DraftResolution { run_id, seat, summary, action } => {
+                    println!("Drafting resolution for run: {} by {}", run_id, seat);
+                    Ok(())
+                }
+                MeetingCommand::CommitAction { run_id, action } => {
+                    println!("Committing action {} for run: {}", action, run_id);
+                    Ok(())
+                }
+                MeetingCommand::Status { run_id } => {
+                    println!("Meeting status for run: {}", run_id);
+                    Ok(())
+                }
+            }
+        }
     }
 }
 
@@ -481,4 +619,319 @@ fn parse_seat(s: &str) -> Result<Seat> {
         "Fengdudadi" | "fengdudadi" | "丰都大帝" => Ok(Seat::Fengdudadi),
         _ => anyhow::bail!("Unknown seat: {}", s),
     }
+}
+
+/// Meeting protocol subcommands
+#[derive(Subcommand, Debug)]
+enum MeetingCommand {
+    /// Open a new meeting session
+    Open {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Meeting topic
+        #[arg(short, long)]
+        topic: String,
+        
+        /// Moderator seat (default: Tianshu)
+        #[arg(short, long, default_value = "Tianshu")]
+        moderator: String,
+        
+        /// Required seats (comma-separated, default: all)
+        #[arg(short, long)]
+        required_seats: Option<String>,
+    },
+    
+    /// Assemble and check seat presence
+    Assemble {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+    },
+    
+    /// Roll call to confirm seat readiness
+    RollCall {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+    },
+    
+    /// Lock the meeting topic
+    TopicLock {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// CEO confirmation statement
+        #[arg(short, long)]
+        confirmation: String,
+    },
+    
+    /// Request to speak
+    RequestSpeak {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Seat requesting to speak
+        #[arg(short, long)]
+        seat: String,
+        
+        /// Speak intent
+        #[arg(short, long)]
+        intent: String,
+        
+        /// Confidence level (0.0-1.0)
+        #[arg(short, long)]
+        confidence: Option<f32>,
+        
+        /// Urgency level (0.0-1.0)
+        #[arg(short, long)]
+        urgency: Option<f32>,
+        
+        /// Reason for speaking
+        #[arg(short, long)]
+        reason: String,
+    },
+    
+    /// Schedule a discussion round
+    ScheduleRound {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Round number
+        #[arg(short, long)]
+        round: u32,
+        
+        /// Speaker order (comma-separated, optional)
+        #[arg(short, long)]
+        speakers: Option<String>,
+    },
+    
+    /// Execute a speaking turn
+    Speak {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Seat speaking
+        #[arg(short, long)]
+        seat: String,
+        
+        /// Content file path
+        #[arg(short, long)]
+        content_file: String,
+    },
+    
+    /// Force a seat to speak
+    ForceSpeak {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Seat to force
+        #[arg(short, long)]
+        seat: String,
+        
+        /// Reason for forcing
+        #[arg(short, long)]
+        reason: String,
+    },
+    
+    /// Update seat stance
+    UpdateStance {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Seat updating stance
+        #[arg(short, long)]
+        seat: String,
+        
+        /// Position statement
+        #[arg(short, long)]
+        position: String,
+        
+        /// Confidence level
+        #[arg(short, long)]
+        confidence: Option<f32>,
+        
+        /// Seats supported (comma-separated)
+        #[arg(short, long)]
+        supports: Option<String>,
+        
+        /// Seats challenged (comma-separated)
+        #[arg(short, long)]
+        challenges: Option<String>,
+    },
+    
+    /// Open challenge window
+    ChallengeWindow {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+    },
+    
+    /// Draft resolution
+    DraftResolution {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Seat drafting
+        #[arg(short, long)]
+        seat: String,
+        
+        /// Resolution summary
+        #[arg(short, long)]
+        summary: String,
+        
+        /// Recommended action
+        #[arg(short, long)]
+        action: String,
+    },
+    
+    /// Commit governance action
+    CommitAction {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+        
+        /// Action to commit (raise-risk, exercise-veto, open-final-gate, terminate, archive)
+        #[arg(short, long)]
+        action: String,
+    },
+    
+    /// Show meeting status
+    Status {
+        /// Run ID
+        #[arg(short, long)]
+        run_id: String,
+    },
+}
+
+/// Entity management subcommands
+#[derive(Subcommand, Debug)]
+enum EntityCommand {
+    /// Create a new AI entity
+    Create {
+        /// Entity name
+        #[arg(short, long)]
+        name: String,
+        
+        /// Seat role
+        #[arg(short, long)]
+        role: String,
+        
+        /// Department
+        #[arg(short, long)]
+        department: String,
+    },
+    
+    /// Show entity status
+    Status {
+        /// Entity ID
+        #[arg(short, long)]
+        entity_id: String,
+    },
+    
+    /// Transition entity status
+    Transition {
+        /// Entity ID
+        #[arg(short, long)]
+        entity_id: String,
+        
+        /// Target status
+        #[arg(short, long)]
+        to_status: String,
+        
+        /// Transition reason
+        #[arg(short, long)]
+        reason: String,
+        
+        /// Initiator
+        #[arg(short, long)]
+        initiated_by: String,
+        
+        /// Approver (required for certain transitions)
+        #[arg(short, long)]
+        approved_by: Option<String>,
+    },
+    
+    /// List entities
+    List {
+        /// Filter (all, active, alive)
+        #[arg(short, long, default_value = "all")]
+        filter: String,
+    },
+    
+    /// Promote entity
+    Promote {
+        /// Entity ID
+        #[arg(short, long)]
+        entity_id: String,
+        
+        /// Target rank
+        #[arg(short, long)]
+        to_rank: String,
+        
+        /// Reason
+        #[arg(short, long)]
+        reason: String,
+        
+        /// Initiator
+        #[arg(short, long)]
+        initiated_by: String,
+    },
+    
+    /// Demote entity
+    Demote {
+        /// Entity ID
+        #[arg(short, long)]
+        entity_id: String,
+        
+        /// Reason
+        #[arg(short, long)]
+        reason: String,
+        
+        /// Initiator
+        #[arg(short, long)]
+        initiated_by: String,
+    },
+    
+    /// Suspend entity
+    Suspend {
+        /// Entity ID
+        #[arg(short, long)]
+        entity_id: String,
+        
+        /// Reason
+        #[arg(short, long)]
+        reason: String,
+        
+        /// Initiator
+        #[arg(short, long)]
+        initiated_by: String,
+    },
+    
+    /// Terminate entity
+    Terminate {
+        /// Entity ID
+        #[arg(short, long)]
+        entity_id: String,
+        
+        /// Reason
+        #[arg(short, long)]
+        reason: String,
+        
+        /// Initiator
+        #[arg(short, long)]
+        initiated_by: String,
+        
+        /// Approver (required for termination)
+        #[arg(short, long)]
+        approved_by: String,
+    },
 }
