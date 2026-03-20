@@ -1,0 +1,126 @@
+# Meeting Protocol + 4h Endurance 验证配置
+
+runtime:
+  # 启用会议协议层
+  enable_meeting_protocol: true
+  
+  # DIBL配置
+  dibl:
+    persist_first: true
+    channels: [Control, Ops, Security, Research]
+    
+  # Provider配置
+  providers:
+    primary:
+      name: "GPT-OSS-120B"
+      endpoint: "http://localhost:8000/v1/chat/completions"
+      timeout_seconds: 120
+    secondary:
+      name: "Kimi-CLI"
+      type: "cli"
+      timeout_seconds: 60
+      
+  # 会议配置
+  meeting:
+    # 自动开启会议
+    auto_open: true
+    
+    # 最大发言轮次
+    max_speak_rounds: 5
+    
+    # 挑战窗口持续时间（秒）
+    challenge_window_seconds: 30
+    
+    # 收敛配置
+    convergence:
+      max_stance_updates_per_round: 1
+      max_rounds_without_convergence: 10
+      auto_resolve_after_dead_floor: true
+      
+    # SmartModerator配置
+    smart_moderator:
+      enabled: true
+      coverage_threshold: 0.6
+      ensure_risk_coverage: true
+      ensure_audit_coverage: true
+      ensure_stability_coverage: true
+      
+    # 行为人格配置
+    behavior_personality:
+      enabled: true
+      use_default_19_profiles: true
+      
+# 19席配置
+seats:
+  - id: "Yuheng"
+    role: "QualityGate"
+    faction: "Audit"
+    bias_style: "VerificationFirst"
+    
+  - id: "Baihu"
+    role: "RedTeam"
+    faction: "Audit"
+    bias_style: "VerificationFirst"
+    
+  - id: "Nezha"
+    role: "Deployment"
+    faction: "Execution"
+    bias_style: "ExecutionFirst"
+    
+  - id: "Xuanwu"
+    role: "Stability"
+    faction: "Audit"
+    bias_style: "Conservative"
+    
+  - id: "Qinglong"
+    role: "Exploration"
+    faction: "Execution"
+    bias_style: "Aggressive"
+    
+  - id: "Zhugeliang"
+    role: "Strategy"
+    faction: "Coordination"
+    bias_style: "Strategic"
+    
+  - id: "Xiwangmu"
+    role: "Resource"
+    faction: "Coordination"
+    bias_style: "ResourceBound"
+    
+  # 其他12席使用默认配置
+  - id: "Pangu"
+    bias_style: "Strategic"
+  - id: "Nüwa"
+    bias_style: "Conservative"
+  - id: "Fuxi"
+    bias_style: "Strategic"
+  - id: "Shennong"
+    bias_style: "ResourceBound"
+  - id: "Huangdi"
+    bias_style: "ExecutionFirst"
+  - id: "Shaohao"
+    bias_style: "Aggressive"
+  - id: "Zhuanxu"
+    bias_style: "Strategic"
+  - id: "Diku"
+    bias_style: "Conservative"
+  - id: "Yao"
+    bias_style: "Strategic"
+  - id: "Shun"
+    bias_style: "Conservative"
+  - id: "Yu"
+    bias_style: "ExecutionFirst"
+  - id: "Houyi"
+    bias_style: "Aggressive"
+
+# 监控配置
+monitoring:
+  # 内存监控阈值 (MB)
+  memory_threshold_mb: 4096
+  
+  # 事件堆积阈值
+  event_backlog_threshold: 1000
+  
+  # 自动导出指标
+  auto_export_metrics: true
+  metrics_interval_seconds: 300

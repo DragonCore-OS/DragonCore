@@ -1,0 +1,102 @@
+# Meeting Protocol + 4h Endurance 验证配置
+
+[runtime]
+name = "dragoncore"
+version = "0.3.0-beta.2"
+data_dir = "./runtime_state"
+log_level = "info"
+enable_meeting_protocol = true
+
+[governance]
+constitution_path = "./runtime_state/constitution"
+escalation_timeout = 300
+strict_mode = true
+
+[dibl]
+persist_first = true
+channels = ["Control", "Ops", "Security", "Research"]
+
+[providers.local_gpt_oss_120b]
+provider_type = "open_ai_compatible"
+api_key = "not-needed-for-local"
+base_url = "http://localhost:8000/v1"
+model = "openai/gpt-oss-120b"
+timeout = 120
+capability = "high"
+cost_tier = "free"
+speed = "medium"
+use_case = ["complex_reasoning", "code_generation", "analysis"]
+
+[providers.kimi_cli_fast]
+provider_type = "kimi_cli"
+api_key = "${KIMI_API_KEY}"
+base_url = "https://api.kimi.com/coding/v1"
+model = "kimi-for-coding"
+timeout = 60
+capability = "high"
+cost_tier = "medium"
+speed = "fast"
+use_case = ["quick_tasks", "iterative_work", "chat"]
+
+[seat_models]
+"Tianshu" = "local_gpt_oss_120b"
+"Tianxuan" = "local_gpt_oss_120b"
+"Tianji" = "local_gpt_oss_120b"
+"Tianquan" = "kimi_cli_fast"
+"Yuheng" = "local_gpt_oss_120b"
+"Kaiyang" = "kimi_cli_fast"
+"Yaoguang" = "kimi_cli_fast"
+"Qinglong" = "kimi_cli_fast"
+"Baihu" = "local_gpt_oss_120b"
+"Zhuque" = "kimi_cli_fast"
+"Xuanwu" = "local_gpt_oss_120b"
+"Yangjian" = "local_gpt_oss_120b"
+"Baozheng" = "local_gpt_oss_120b"
+"Zhongkui" = "kimi_cli_fast"
+"Luban" = "local_gpt_oss_120b"
+"Zhugeliang" = "local_gpt_oss_120b"
+"Nezha" = "kimi_cli_fast"
+"Xiwangmu" = "local_gpt_oss_120b"
+"Fengdudadi" = "local_gpt_oss_120b"
+default = "local_gpt_oss_120b"
+
+[model_selection]
+auto_select = true
+
+[execution]
+tmux_prefix = "dragoncore"
+worktree_base = "./runtime_state/worktrees"
+max_concurrent_agents = 19
+isolation_enabled = true
+
+[ledger]
+storage_path = "./runtime_state/ledger"
+auto_archive_threshold = 100
+retention_days = 365
+
+[meeting]
+auto_open = true
+max_speak_rounds = 5
+challenge_window_seconds = 30
+
+[meeting.convergence]
+max_stance_updates_per_round = 1
+max_rounds_without_convergence = 10
+auto_resolve_after_dead_floor = true
+
+[meeting.smart_moderator]
+enabled = true
+coverage_threshold = 0.6
+ensure_risk_coverage = true
+ensure_audit_coverage = true
+ensure_stability_coverage = true
+
+[meeting.behavior_personality]
+enabled = true
+use_default_19_profiles = true
+
+[monitoring]
+memory_threshold_mb = 4096
+event_backlog_threshold = 1000
+auto_export_metrics = true
+metrics_interval_seconds = 300
