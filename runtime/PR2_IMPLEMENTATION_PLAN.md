@@ -85,28 +85,59 @@ pub struct DecisionImpact {
 }
 
 /// 责任权重计算
+/// 
+/// 权重分配规则 (总和 100%):
+/// - 主要责任人 (提出方案): 40%
+/// - 拍板者 (最终决策): 30%
+/// - 支持者 (背书): 30% 均分 (如果支持者为空，此部分权重作废，不归入其他方)
+/// - 反对者: 0% (仅记录，不担责)
+/// 
+/// 同一实体多角色时，权重累加不覆盖。
+/// 
+/// 特殊情形处理:
+/// - 无支持者时: 主责 40% + 拍板 30% = 70%，剩余 30% 作废
+/// - 主责兼拍板: 权重累加为 70%
+/// - 主责兼支持者: 权重累加为 40% + 15% = 55%
 impl DecisionAttribution {
     /// 计算每个参与者的责任权重
     pub fn calculate_responsibility(&self) -> HashMap<Uuid, f32> {
-        let mut weights = HashMap::new();
+        let mut weights: HashMap<Uuid, f32> = HashMap::new();
         
         // 主要责任人: 40%
-        weights.insert(self.primary_owner, 0.40);
+        *weights.entry(self.primary_owner).or_insert(0.0) += 0.40;
         
-        // 支持者: 各 10% (均分)
+        // 拍板者: 30%
+        *weights.entry(self.approving_authority).or_insert(0.0) += 0.30;
+        
+        // 支持者: 30% 均分
         if !self.supporting.is_empty() {
-            let supporter_weight = 0.10 / self.supporting.len() as f32;
+            let supporter_weight = 0.30 / self.supporting.len() as f32;
             for supporter in &self.supporting {
-                weights.insert(*supporter, supporter_weight);
+                *weights.entry(*supporter).or_insert(0.0) += supporter_weight;
             }
         }
         
-        // 拍板者: 30%
-        weights.insert(self.approving_authority, 0.30);
-        
-        // 反对者不担责，但有记录
+        // 反对者不担责，但有记录 (不入 weights)
         
         weights
+    }
+    
+    /// 检查实体是否担任多个角色
+    pub fn has_multiple_roles(&self, entity_id: Uuid) -> Vec<&'static str> {
+        let mut roles = Vec::new();
+        if self.primary_owner == entity_id {
+            roles.push("primary_owner");
+        }
+        if self.approving_authority == entity_id {
+            roles.push("approving_authority");
+        }
+        if self.supporting.contains(&entity_id) {
+            roles.push("supporter");
+        }
+        if self.challenging.contains(&entity_id) {
+            roles.push("challenger");
+        }
+        roles
     }
 }
 ```
@@ -466,15 +497,52 @@ fn test_responsibility_calculation() {
     // 拍板者 30%
     assert_eq!(weights.get(&attr.approving_authority), Some(&0.30));
     
-    // 支持者各 5%
+    // 支持者各 15% (30% 均分给 2 人)
     for supporter in &attr.supporting {
-        assert_eq!(weights.get(supporter), Some(&0.05));
+        assert_eq!(weights.get(supporter), Some(&0.15));
     }
     
     // 反对者不在权重表中
     for challenger in &attr.challenging {
         assert!(!weights.contains_key(challenger));
     }
+    
+    // 验证总和为 100% (允许浮点误差)
+    let total: f32 = weights.values().sum();
+    assert!((total - 1.0).abs() < 0.001);
+}
+
+#[test]
+fn test_multiple_roles_weight_accumulation() {
+    let same_entity = Uuid::new_v4();
+    let other_supporter = Uuid::new_v4();
+    
+    let attr = DecisionAttribution {
+        decision_id: Uuid::new_v4(),
+        primary_owner: same_entity,      // 40%
+        approving_authority: same_entity, // 30%
+        supporting: vec![same_entity, other_supporter], // 各 15%
+        challenging: vec![],
+        // ...
+    };
+    
+    let weights = attr.calculate_responsibility();
+    
+    // 同一实体担任多角色时，权重累加: 40% + 30% + 15% = 85%
+    assert_eq!(weights.get(&same_entity), Some(&0.85));
+    
+    // 另一支持者 15%
+    assert_eq!(weights.get(&other_supporter), Some(&0.15));
+    
+    // 验证总和为 100%
+    let total: f32 = weights.values().sum();
+    assert!((total - 1.0).abs() < 0.001);
+    
+    // 验证多角色检测
+    let roles = attr.has_multiple_roles(same_entity);
+    assert!(roles.contains(&"primary_owner"));
+    assert!(roles.contains(&"approving_authority"));
+    assert!(roles.contains(&"supporter"));
 }
 
 #[test]
@@ -620,3 +688,135 @@ fi
 
 *计划制定: 2026-03-20*  
 *状态: 等待实施启动*
+
+---
+
+## 6. 实施启动信号 (DragonCore 小组正式指令)
+
+**发布日期**: 2026-03-20  
+**生效状态**: 立即生效  
+**指令级别**: P0 (最高优先级)
+
+---
+
+### 6.1 执行原则
+
+1. **以本文档为唯一实施基线** - 不得偏离计划另起炉灶
+2. **不得破坏 v0.2.1 已验证路径** - 单节点 JSON/CSV 持久化必须保持稳定
+3. **先修正再实现** - Day 1 开始前必须冻结两项设计决策
+
+### 6.2 Day 0 必须冻结的设计决策
+
+在写正式实现代码前，必须先确定并文档化：
+
+#### 决策 1: 支持者权重分配 (已确定)
+
+**规则**: 支持者总计 **30%** 均分，不是各 10%。
+
+| 场景 | 支持者权重 |
+|------|-----------|
+| 2 个支持者 | 各 15% |
+| 3 个支持者 | 各 10% |
+| 无支持者 | 30% 作废，不归入其他方 |
+
+**代码要求**: `supporter_weight = 0.30 / supporting.len()`
+
+#### 决策 2: 同一实体多角色时权重累加 (已确定)
+
+**规则**: 同一 UUID 担任多角色时，权重必须**累加**，不得覆盖。
+
+**实现要求**:
+```rust
+*weights.entry(entity_id).or_insert(0.0) += weight;
+// 禁止: weights.insert(entity_id, weight); // 会覆盖！
+```
+
+**测试要求**: 必须测试以下场景：
+- 主责 + 拍板 = 70%
+- 主责 + 支持者 = 55% (假设 2 支持者)
+- 主责 + 拍板 + 支持者 = 85%
+
+### 6.3 Day 1 必须落地的三件事
+
+| 优先级 | 文件 | 验收标准 |
+|--------|------|----------|
+| 1 | `src/entity/attribution.rs` | 可编译，包含权重累加逻辑，通过单元测试 |
+| 2 | `src/entity/kpi.rs` | 可编译，三层 KPI 结构完整，通过单元测试 |
+| 3 | `src/events/mod.rs` | 5 个新事件类型定义完成，可编译 |
+
+### 6.4 Day 2-3 必须完成的测试 (Final-Gate 接线前)
+
+**测试 1: 无归因决策被拒绝**
+```rust
+#[tokio::test]
+async fn test_final_gate_blocks_unattributed() {
+    let decision = Decision { attribution: None, ... };
+    let result = runtime.final_gate(&decision).await;
+    assert!(matches!(result, Err(FinalGateError::MissingAttribution)));
+}
+```
+
+**测试 2: 多角色权重正确累加**
+```rust
+#[test]
+fn test_multiple_roles_accumulation() {
+    let same_entity = Uuid::new_v4();
+    let attr = DecisionAttribution {
+        primary_owner: same_entity,
+        approving_authority: same_entity,
+        supporting: vec![same_entity],
+        ...
+    };
+    let weights = attr.calculate_responsibility();
+    // 40% + 30% + 30% = 100%
+    assert_eq!(weights.get(&same_entity), Some(&1.0));
+}
+```
+
+### 6.5 实施口令
+
+**阶段 1** (Day 1-3): 归因数据结构 + 事件落盘 + 查询 CLI → **可编译最小闭环**  
+**阶段 2** (Day 4-7): Final-gate 拦截点接线  
+**阶段 3** (Day 8-10): Replay 重建 + 集成测试
+
+### 6.6 禁止事项
+
+当前阶段**绝对禁止**：
+- ❌ 先上 KPI 阈值惩罚逻辑 (先做归因，再谈阈值)
+- ❌ 先做 PR-3 (必须先完成 PR-2 闭环)
+- ❌ 一开始就改大面积 runtime 架构
+- ❌ 破坏 v0.2.1 已验证的单节点 JSON 路径
+
+### 6.7 并行任务边界
+
+**Meeting Protocol 4h endurance**: 继续保持为并行验证线，但不抢占 PR-2 主线资源。
+
+| 任务 | 资源分配 | 状态 |
+|------|----------|------|
+| PR-2 主线 | 80% | 立即启动 |
+| Endurance 验证 | 20% | 并行推进 |
+
+**Endurance 当前状态**: [Unknown] - 仍待完成证据。
+
+### 6.8 交付检查清单
+
+每次提交必须包含：
+- [ ] 功能说明 (实现了什么)
+- [ ] 验收标准 (怎么算通过)
+- [ ] DIBL 事件影响 (新增/修改了哪些事件)
+- [ ] Replay 影响 (回放是否受影响)
+- [ ] 测试清单 (哪些测试覆盖)
+- [ ] 边界说明 (限制和约束)
+
+### 6.9 核心原则重申
+
+> **先把"归因数据结构 + 事件落盘 + 查询 CLI"做成可编译最小闭环，再接 final-gate，最后接 replay。**
+>
+> **只要 PR-2 没落，DragonCore 还没有真正做到"把后果绑上去"。**
+
+---
+
+**DragonCore 小组：PR-2 现在正式启动。**
+
+*指令发布: 2026-03-20*  
+*下一检查点: Day 3 结束时 (attribution.rs + kpi.rs + events 可编译闭环)*
