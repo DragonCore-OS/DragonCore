@@ -9,14 +9,18 @@
 //! 8 状态机：
 //! Candidate → Active → Limited/UnderReview/Demoted/Suspended → Archived/Terminated
 
+pub mod attribution;
 pub mod identity;
+pub mod kpi;
 pub mod status;
 pub mod storage;
 pub mod archive;
 pub mod manager;
 
 // 重新导出主要类型
+pub use attribution::{DecisionAttribution, DecisionType, DecisionOutcome, DecisionImpact};
 pub use identity::AIEntityIdentity;
+pub use kpi::{PeriodKPI, KPIDetails, KPICalculator};
 pub use status::{EntityStatus, StateTransitionRequest, StateTransitionValidator, StateTransitionRecord};
 pub use storage::{EntityStorage, FileSystemStorage, MemoryStorage, StorageError};
 pub use archive::{EntityRank, Department, Authority, EntityBaseArchive};

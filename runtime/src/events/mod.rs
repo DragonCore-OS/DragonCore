@@ -140,6 +140,11 @@ pub enum GovernanceEventType {
     EntityTerminated,
     EntityStatusChanged,
     EntityPromoted,
+    
+    // PR-2: Decision Attribution and KPI
+    EntityKpiUpdated,
+    DecisionAttributed,
+    EntityWarned,
 }
 
 /// A governance event
