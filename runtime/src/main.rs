@@ -519,6 +519,50 @@ async fn main() -> Result<()> {
                     // TODO: Implement termination
                     Ok(())
                 }
+                EntityCommand::Kpi { entity_id, period } => {
+                    use crate::entity::kpi::{PeriodKPI, KPICalculator};
+                    use uuid::Uuid;
+                    
+                    let period = period.unwrap_or_else(|| "2026-03".to_string());
+                    
+                    // 创建示例 KPI (真实实现需要从事件计算)
+                    let entity_uuid = Uuid::parse_str(&entity_id).unwrap_or_else(|_| Uuid::new_v4());
+                    let kpi = PeriodKPI::new(entity_uuid, &period);
+                    
+                    println!("{}", serde_json::to_string_pretty(&kpi).unwrap_or_default());
+                    Ok(())
+                }
+                EntityCommand::Attribution { decision_id } => {
+                    use crate::entity::attribution::{DecisionAttribution, DecisionType};
+                    use uuid::Uuid;
+                    
+                    // 尝试解析 decision_id，否则创建示例
+                    let decision_uuid = Uuid::parse_str(&decision_id).unwrap_or_else(|_| {
+                        println!("Note: Using sample decision ID (invalid UUID provided)");
+                        Uuid::new_v4()
+                    });
+                    
+                    // 创建示例归因 (真实实现需要从存储查询)
+                    let attr = DecisionAttribution::new(
+                        DecisionType::Proposal,
+                        Uuid::new_v4(),
+                        Uuid::new_v4(),
+                    ).with_supporters(vec![Uuid::new_v4()]);
+                    
+                    let weights = attr.calculate_responsibility();
+                    
+                    let result = serde_json::json!({
+                        "decision_id": attr.decision_id,
+                        "primary_owner": attr.primary_owner,
+                        "approving_authority": attr.approving_authority,
+                        "supporting": attr.supporting,
+                        "responsibility_weights": weights,
+                        "total_weight": weights.values().sum::<f32>()
+                    });
+                    
+                    println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+                    Ok(())
+                }
             }
         }
         Commands::Meeting { command } => {
@@ -933,5 +977,23 @@ enum EntityCommand {
         /// Approver (required for termination)
         #[arg(short, long)]
         approved_by: String,
+    },
+    
+    /// Query entity KPI
+    Kpi {
+        /// Entity ID
+        #[arg(short, long)]
+        entity_id: String,
+        
+        /// Period (e.g., "2026-03")
+        #[arg(short, long)]
+        period: Option<String>,
+    },
+    
+    /// Query decision attribution
+    Attribution {
+        /// Decision ID
+        #[arg(short, long)]
+        decision_id: String,
     },
 }

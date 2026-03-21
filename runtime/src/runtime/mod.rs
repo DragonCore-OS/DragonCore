@@ -268,6 +268,41 @@ impl DragonCoreRuntime {
         Ok(response)
     }
     
+    /// Raise a risk (RiskRaised event)
+    /// This allows seats to flag risks without exercising veto
+    pub async fn raise_risk(&self, run_id: &str, seat: Seat, risk_type: &str, description: &str) -> Result<()> {
+        // Record risk in ledger
+        {
+            let mut ledger = self.ledger.write().await;
+            ledger.load_run(run_id);
+            ledger.record_risk(run_id)?;
+        }
+        
+        // Get provider for this seat (for tracking)
+        let provider_name = {
+            let router = self.model_router.read().await;
+            router.get_provider_name_for_seat(Some(&format!("{:?}", seat))).to_string()
+        };
+        
+        // EMIT DIBL EVENT: RiskRaised -> Security channel
+        let seat_str = format!("{:?}", seat);
+        let event = GovernanceEvent::new(run_id, GovernanceEventType::RiskRaised, EventChannel::Security, &seat_str)
+            .with_seat(&seat_str)
+            .with_scope(EventScope::OperatorVisible)
+            .with_severity(Severity::Warn)
+            .with_summary(format!("[{}] {}", risk_type, description))
+            .with_artifact(format!("risk_type: {}", risk_type))
+            .with_trigger_context("runtime.raise_risk")
+            .with_provider(&provider_name);
+        
+        if let Err(e) = self.dible.emit(event) {
+            tracing::error!("Failed to emit risk_raised event: {}", e);
+        }
+        
+        tracing::info!("Risk raised by {:?} on run {}: [{}] {}", seat, run_id, risk_type, description);
+        Ok(())
+    }
+    
     /// Exercise veto
     pub async fn exercise_veto(&self, run_id: &str, seat: Seat, reason: &str) -> Result<()> {
         // Check if seat has veto authority
@@ -289,6 +324,12 @@ impl DragonCoreRuntime {
             ledger.record_veto(run_id, seat)?;
         }
         
+        // Get provider for this seat (for tracking)
+        let provider_name = {
+            let router = self.model_router.read().await;
+            router.get_provider_name_for_seat(Some(&format!("{:?}", seat))).to_string()
+        };
+        
         // EMIT DIBL EVENT: VetoExercised -> Security channel
         // Rule: JSON/ledger must succeed before broadcast
         let seat_str = format!("{:?}", seat);
@@ -297,7 +338,8 @@ impl DragonCoreRuntime {
             .with_scope(EventScope::OperatorVisible)
             .with_severity(Severity::Warn)
             .with_summary(reason.to_string())
-            .with_trigger_context("runtime.exercise_veto");
+            .with_trigger_context("runtime.exercise_veto")
+            .with_provider(&provider_name);
         
         if let Err(e) = self.dible.emit(event) {
             tracing::error!("Failed to emit veto event: {}", e);
@@ -326,23 +368,37 @@ impl DragonCoreRuntime {
             ledger.finalize_run(run_id, final_state)?;
         }
         
+        // Get provider for Tianshu (for tracking)
+        let provider_name = {
+            let router = self.model_router.read().await;
+            router.get_provider_name_for_seat(Some("Tianshu")).to_string()
+        };
+        
         // EMIT DIBL EVENT: FinalGateOpened -> Control channel
         let fg_event = GovernanceEvent::new(run_id, GovernanceEventType::FinalGateOpened, EventChannel::Control, "Tianshu")
             .with_seat("Tianshu")
             .with_scope(EventScope::OperatorVisible)
             .with_summary(format!("Final gate: {}", if approve { "APPROVED" } else { "REJECTED" }))
-            .with_trigger_context("runtime.final_gate");
+            .with_trigger_context("runtime.final_gate")
+            .with_provider(&provider_name);
         
         if let Err(e) = self.dible.emit(fg_event) {
             tracing::error!("Failed to emit final_gate event: {}", e);
         }
+        
+        // Get provider for Tianshu (for tracking) - reuse from above
+        let provider_name_decision = {
+            let router = self.model_router.read().await;
+            router.get_provider_name_for_seat(Some("Tianshu")).to_string()
+        };
         
         // EMIT DIBL EVENT: DecisionCommitted -> Control channel
         let decision_event = GovernanceEvent::new(run_id, GovernanceEventType::DecisionCommitted, EventChannel::Control, "Tianshu")
             .with_seat("Tianshu")
             .with_scope(EventScope::Exportable)
             .with_summary(if approve { "APPROVED".to_string() } else { "REJECTED".to_string() })
-            .with_trigger_context("runtime.final_gate");
+            .with_trigger_context("runtime.final_gate")
+            .with_provider(&provider_name_decision);
         
         if let Err(e) = self.dible.emit(decision_event) {
             tracing::error!("Failed to emit decision event: {}", e);
@@ -375,13 +431,20 @@ impl DragonCoreRuntime {
             active.remove(run_id);
         }
         
+        // Get provider for this seat (for tracking)
+        let provider_name = {
+            let router = self.model_router.read().await;
+            router.get_provider_name_for_seat(Some(&format!("{:?}", seat))).to_string()
+        };
+        
         // EMIT DIBL EVENT: ArchiveCompleted -> Ops channel
         let seat_str = format!("{:?}", seat);
         let event = GovernanceEvent::new(run_id, GovernanceEventType::ArchiveCompleted, EventChannel::Ops, &seat_str)
             .with_seat(&seat_str)
             .with_scope(EventScope::OperatorVisible)
             .with_summary("Run archived")
-            .with_trigger_context("runtime.archive_run");
+            .with_trigger_context("runtime.archive_run")
+            .with_provider(&provider_name);
         
         if let Err(e) = self.dible.emit(event) {
             tracing::error!("Failed to emit archive event: {}", e);
@@ -419,6 +482,12 @@ impl DragonCoreRuntime {
             self.tmux.kill_session(run_id)?;
         }
         
+        // Get provider for this seat (for tracking)
+        let provider_name = {
+            let router = self.model_router.read().await;
+            router.get_provider_name_for_seat(Some(&format!("{:?}", seat))).to_string()
+        };
+        
         // EMIT DIBL EVENT: TerminateTriggered -> Security channel
         let seat_str = format!("{:?}", seat);
         let event = GovernanceEvent::new(run_id, GovernanceEventType::TerminateTriggered, EventChannel::Security, &seat_str)
@@ -426,7 +495,8 @@ impl DragonCoreRuntime {
             .with_scope(EventScope::OperatorVisible)
             .with_severity(Severity::Critical)
             .with_summary(reason.to_string())
-            .with_trigger_context("runtime.terminate_run");
+            .with_trigger_context("runtime.terminate_run")
+            .with_provider(&provider_name);
         
         if let Err(e) = self.dible.emit(event) {
             tracing::error!("Failed to emit terminate event: {}", e);

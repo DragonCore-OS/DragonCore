@@ -1,258 +1,141 @@
-# DragonCore Runtime - Status
+# DragonCore Runtime 狀態
 
-**Version**: v0.2.1  
-**Date**: 2026-03-14  
-**Phase**: **Verified Core Runtime Phase** ✅
-
----
-
-## Executive Status
-
-> **DragonCore Runtime v0.2.1 has verified the first complete single-node JSON-backed governance path end to end.**
->
-> DragonCore Runtime v0.2.1 已完成首条单节点、JSON 持久化治理路径的端到端验证。
+**版本**: v0.3.0-beta.2  
+**更新日期**: 2026-03-20
 
 ---
 
-## Core Statement
+## 當前狀態
 
-**This is not "almost done." This is "the first complete runtime path is verified and ready for disciplined expansion."**
+🟢 **Phase 1-3 驗證閉環完成 + Meeting Protocol v0.1 完成**
 
-**核心路径已证真，可以开始扩展，但扩展必须基于已验证路径，不得破坏它。**
+### 驗證里程碑
 
----
-
-## What Was Verified (10/10)
-
-| # | Component | Evidence |
-|---|-----------|----------|
-| 1 | **Run Creation** | JSON state file created immediately |
-| 2 | **Seat Execution** | Participation tracked in ledger |
-| 3 | **Veto** | Cross-CLI state loading verified |
-| 4 | **Final Gate** | State transition: Created → Approved |
-| 5 | **Archive** | Terminal state persisted |
-| 6 | **Ledger** | CSV immediate write confirmed |
-| 7 | **Metrics** | "Total runs: 1" (was 0) |
-| 8 | **Tmux Isolation** | 19-seat governance sessions |
-| 9 | **Worktree** | Per-run git isolation |
-| 10 | **Cross-CLI** | State survives process death |
+| 階段 | 狀態 | 完成日期 |
+|------|------|----------|
+| Phase 1 | ✅ PASS | 2026-03-17 |
+| Phase 2A | ✅ PASS | 2026-03-17 |
+| Phase 2B | ✅ PASS | 2026-03-17 |
+| Phase 3 | ✅ PASS | 2026-03-19 |
+| **Meeting Protocol v0.1** | **✅ PASS** | **2026-03-20** |
 
 ---
 
-## Phase Definition: Verified Core Runtime
+## 系統演進
 
-### What This Means
-- ✅ Core runtime loop is closed and verified
-- ✅ State persistence is proven across CLI invocations
-- ✅ Ledger is accurate and immediate
-- ✅ Metrics correctly reflect operational state
+DragonCore 已從線性 seat 執行器，**演進為具備完整會議協議層的治理操作系統原型**。
 
-### What This Does NOT Mean
-- ❌ Not all platforms (Windows pending)
-- ❌ Not all backends (SQLite pending)
-- ❌ Not distributed (v0.6.0)
-- ❌ Not all features (Web UI pending)
+### 核心能力躍遷
 
-### Expansion Rule
-> **扩展必须基于已验证路径，不得破坏它。**
+| 能力 | 描述 |
+|------|------|
+| **會議開啟與點名** | 13 CLI 命令支持完整會議流程 |
+| **議題鎖定** | TopicLock 機制鎖定討論範圍 |
+| **自主申請發言** | Request-speak 隊列 + 智能調度 |
+| **立場追踪與衝突收斂** | P1 stance 系統：可追踪、可回放、可收束 |
+| **Coverage-aware 智能主持** | P2 SmartModerator：8 種角色覆蓋檢查，6 因素發言排序 |
+| **行為人格驅動差異化決策** | P3 9 參數行為配置：6 種 BiasStyle，19 席默認配置 |
 
-Any expansion (Windows, SQLite, distributed) must:
-1. Preserve the v0.2.1 verification boundary
-2. Add, not replace, the verified path
-3. Maintain backward compatibility with JSON/CSV format
+**全過程可追踪、可回放、可解釋，並嚴格服從既有權力邊界。**
 
 ---
 
-## Verification Evidence
+## 準確結論
 
-### End-to-End Governance Chain
+### ✅ 已驗證能力
 
-```bash
-# Step 1: Create
-$ dragoncore run --run-id demo --input-type code -t "Verify"
-[INFO] Started ledger entry for run: demo
+#### 基礎治理層
+- 19 席治理結構完整運行
+- 雙模型 provider 路由 (GPT-OSS-120B + Kimi CLI)
+- DIBL 事件系統完整生命週期
+- Veto/Security channel 真實觸發
+- Final Gate → Archive 閉環
+- **4 小時無人工干預 endurance (100% 成功率)**
 
-# Step 2: Veto (new CLI process)
-$ dragoncore veto --run-id demo --seat Yuheng --reason "test"
-[INFO] Loaded 1 runs from persistent storage  <-- STATE FOUND
+#### 會議協議層 (v0.1)
+- **P0**: 會議基礎結構 (13 CLI 命令, MeetingSession)
+- **P1**: 立場系統 (StanceTracking, 5 項測試通過)
+- **P2**: 智能主持 (Coverage-aware scheduling, 6 項測試通過)
+- **P3**: 行為人格 (Behavior Personality, 7 項測試通過)
+- **總計**: 19 項會議協議測試通過
 
-# Step 3: Finalize (new CLI process)
-$ dragoncore final-gate --run-id demo --approve
-[INFO] Finalized ledger entry for run: demo with state: Approved
+### ⚠️ 能力邊界
 
-# Step 4: Verify Metrics (new CLI process)
-$ dragoncore metrics
-Total runs: 1          <-- CORRECT
-Clean runs: 1          <-- CORRECT
-```
+**在當前已驗證邊界內，已具備「受控生產試點」條件：**
+- ✅ 單節點部署
+- ✅ JSON-backed 持久化
+- ✅ CLI 模式
+- ✅ Linux/WSL 平台
+- ✅ 會議協議層 (P0-P3)
 
-### State Consistency
+### ❌ 未驗證/未實現
 
-**JSON State** (`runtime_state/runs/demo.json`):
-```json
-{
-  "run_id": "demo",
-  "status": "Approved",
-  "veto": {"seat": "Yuheng", ...},
-  "final_gate": {"seat": "Tianshu", "approved": true},
-  "events": [...]
-}
-```
-
-**CSV Ledger** (`runtime_state/ledger/production_ledger.csv`):
-```csv
-demo,2026-03-14T02:27:01Z,code,Approved,0,Yuheng,...,true
-```
-
-**Metrics Output**:
-```
-Total runs: 1
-Clean runs: 1
-```
-
-All three sources consistent for same `run_id`.
+| 類別 | 項目 |
+|------|------|
+| 自動化 | 基於規則的智能自動切換 (model_selection.rules) |
+| 部署 | 多節點部署、HTTP API 模式、非 Linux 平台 |
+| 長時 | >4 小時長時間運行（會議協議層聯合驗證待進行）|
+| 併發 | 高併發 (>10 並行 run) |
+| 分佈式 | 分佈式會議、多節點會議同步 |
+| 模型 | 規則式自動模型切換 |
 
 ---
 
-## Current Phase: Verified Core Runtime
+## 使用建議
+
+### 🟢 推薦場景 (受控試點)
+- 小規模團隊內部使用
+- 非關鍵業務流程
+- 有運維人員監控
+- 可接受單節點限制
+- **需要正式會議流程的治理決策**
+
+### 🔴 不推薦場景
+- 關鍵核心業務 (未經混沌測試)
+- 需要智能模型切換的場景
+- 多節點高可用要求
+- 無人值守長期運行 (>4h)
+- **會議協議層的長時 endurance 尚未聯合驗證**
+
+---
+
+## 下一步
+
+### 🔜 當前狀態：v0.1 凍結
+
+**Meeting Protocol v0.1 已凍結** ([FREEZE_v0.1.md](./FREEZE_v0.1.md))
+
+在聯合 Endurance 驗證完成前：
+- 🚫 **禁止**：新增會議功能、修改核心邏輯、調整行為參數
+- ✅ **允許**：缺陷修復、文檔糾正、觀測增強
+
+### 🧪 即將執行：聯合驗證
+
+**Meeting Protocol v0.1 + 4h Endurance 聯合驗證**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    VERIFIED CORE RUNTIME                     │
-│                         v0.2.1                               │
-│                                                              │
-│  ✅ Single-node JSON path                                    │
-│  ✅ Cross-CLI state continuity                               │
-│  ✅ Immediate ledger persistence                             │
-│  ✅ Accurate metrics                                         │
-│  ✅ 19-seat governance                                       │
-│  ✅ Tmux + worktree isolation                               │
-└─────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-        ┌──────────┐    ┌──────────┐    ┌──────────┐
-        │ Windows  │    │  SQLite  │    │   Web    │
-        │ Desktop  │    │ Backend  │    │   UI     │
-        │  v0.4.0? │    │  v0.3.0? │    │  v0.5.0? │
-        └──────────┘    └──────────┘    └──────────┘
-              │
-              ▼
-        Disciplined Expansion
-        (Must preserve v0.2.1 core)
+驗證設計：
+- 時間：4 小時無人工干預
+- 配置：Meeting Protocol + 雙 provider + 19 席 + DIBL
+- 目標：回答一個問題 —— 會議協議層是否破壞了原有長時穩定性？
+- 執行：./scripts/meeting_endurance_test.sh
 ```
 
----
-
-## Next Decision: Two Routes
-
-### Route A: Windows Desktop (WSL-backed)
-**Goal**: Lower user installation barrier, expand to Windows developers.
-
-**Scope**:
-- Windows installer (MSI)
-- WSL integration layer
-- Windows Terminal integration
-- Optional Tauri GUI
-
-**Value**: High (user expansion)  
-**Risk**: Medium (new platform)  
-**Effort**: 2-3 weeks
-
-### Route B: v0.3.0 SQLite Persistence
-**Goal**: Strengthen local runtime with better backend.
-
-**Scope**:
-- `SqliteRunStore` implementation
-- Migration from JSON
-- SQL-based ledger
-- Query interface
-
-**Value**: Medium (production hardening)  
-**Risk**: Low (additive)  
-**Effort**: 1-2 weeks
-
-### Decision Criteria
-
-| Criteria | Windows | SQLite |
-|----------|---------|--------|
-| User Growth | High | Low |
-| Technical Risk | Medium | Low |
-| Strategic Value | High | Medium |
-
-See [NEXT_MILESTONE.md](NEXT_MILESTONE.md) for detailed planning.
+**驗證結論分檔**：
+- 🟢 **PASS**：全部指標滿足，會議協議層穩定
+- 🟡 **CONDITIONAL PASS**：基本滿足，但有小缺口需評估
+- 🔴 **FAIL**：出現死鎖/崩潰/權限繞過等嚴重問題，需修復
 
 ---
 
-## Engineering Discipline
+## 參考文檔
 
-### Frozen (v0.2.1 Core)
-- JSON persistence format
-- CSV ledger schema
-- Cross-CLI state loading pattern
-- Governance authority chain
-- 19-seat structure
-
-### Open for Expansion
-- Additional platforms (Windows, macOS)
-- Additional backends (SQLite)
-- Additional interfaces (GUI, Web)
-- Additional features (distributed)
-
-### Golden Rule
-> **扩展必须基于已验证路径，不得破坏它。**
-
-New features must:
-1. Use existing `RunStore` trait
-2. Maintain JSON/CSV compatibility
-3. Preserve cross-CLI continuity
-4. Keep metrics accurate
+- [VERIFICATION_RESULTS.md](./VERIFICATION_RESULTS.md) - 完整驗證報告
+- [MEETING_PROTOCOL_P3.md](./MEETING_PROTOCOL_P3.md) - Meeting Protocol v0.1 驗收報告
+- [PHASE3_VERDICT.md](./PHASE3_VERDICT.md) - Phase 3 詳細報告
+- [PHASE3_REPORT.json](./PHASE3_REPORT.json) - 結構化測試數據
 
 ---
 
-## Documentation
-
-| File | Purpose |
-|------|---------|
-| `RELEASE_NOTES_v0.2.1.md` | Full verification evidence |
-| `NEXT_MILESTONE.md` | Route A vs Route B analysis |
-| `docs/VERIFICATION_REPORT.md` | Detailed test results |
-| `docs/PERSISTENCE_DESIGN.md` | Architecture decisions |
-
----
-
-## Build & Verify
-
-```bash
-# Current verified version
-cargo build --release
-./target/release/dragoncore-runtime --version
-# dragoncore-runtime 0.2.1
-
-# Verify end-to-end
-dragoncore run --run-id test --input-type code -t "Verify"
-dragoncore veto --run-id test --seat Yuheng --reason "test"
-dragoncore final-gate --run-id test --approve
-dragoncore metrics
-# Expected: Total runs: 1
-```
-
----
-
-## Final Statement
-
-**v0.2.1 is the first "solid ground" version of DragonCore Runtime.**
-
-It is not a prototype. It is a verified, operational runtime path that can be:
-- Deployed (single-node)
-- Extended (disciplined expansion)
-- Built upon (Windows, SQLite, distributed)
-
-**The foundation is set. Expansion begins.**
-
----
-
-**Phase**: Verified Core Runtime ✅  
-**Status**: v0.2.1 Complete  
-**Next**: Disciplined Expansion (Route A or B)  
-**Rule**: Preserve the verified core
+*注意: "受控生產試點"不等價於"全面生產就緒"，使用前請評估邊界限制。*
+*"治理操作系統原型"不等價於"所有未來會議能力已終局完備"。*

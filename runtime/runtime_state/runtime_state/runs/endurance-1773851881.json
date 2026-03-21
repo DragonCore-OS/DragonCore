@@ -1,0 +1,38 @@
+{
+  "run_id": "endurance-1773851881",
+  "status": "Archived",
+  "task": "Quick fix: Update timeout config from 60s to 120s. Minimal review needed.",
+  "input_type": "emergency",
+  "worktree_path": "./runtime_state/worktrees/endurance-1773851881",
+  "tmux_session": "dragoncore_endurance-1773851881",
+  "created_at": "2026-03-18T16:38:01.834339040Z",
+  "updated_at": "2026-03-18T16:43:36.999428072Z",
+  "events": [
+    {
+      "timestamp": "2026-03-18T16:43:36.938041542Z",
+      "seat": "Tianshu",
+      "action": "final_gate",
+      "details": "approved: true"
+    },
+    {
+      "timestamp": "2026-03-18T16:43:36.999427431Z",
+      "seat": "Yaoguang",
+      "action": "archive",
+      "details": null
+    }
+  ],
+  "metrics": {
+    "seat_participation": {},
+    "veto_count": 0,
+    "revision_count": 0
+  },
+  "veto": null,
+  "final_gate": {
+    "seat": "Tianshu",
+    "approved": true,
+    "timestamp": "2026-03-18T16:43:36.938040860Z"
+  },
+  "current_seat": null,
+  "seats_participated": [],
+  "artifacts": []
+}

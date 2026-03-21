@@ -1,0 +1,48 @@
+{
+  "run_id": "endurance-1773848655",
+  "status": "Archived",
+  "task": "Review src/events/mod.rs for error handling patterns. Suggest improvements.",
+  "input_type": "code_review",
+  "worktree_path": "./runtime_state/worktrees/endurance-1773848655",
+  "tmux_session": "dragoncore_endurance-1773848655",
+  "created_at": "2026-03-18T15:44:15.870690333Z",
+  "updated_at": "2026-03-18T15:50:30.337297705Z",
+  "events": [
+    {
+      "timestamp": "2026-03-18T15:50:30.218889510Z",
+      "seat": "Yuheng",
+      "action": "veto",
+      "details": "Quality gate: Insufficient validation time for production deployment"
+    },
+    {
+      "timestamp": "2026-03-18T15:50:30.278062792Z",
+      "seat": "Tianshu",
+      "action": "final_gate",
+      "details": "approved: true"
+    },
+    {
+      "timestamp": "2026-03-18T15:50:30.337297093Z",
+      "seat": "Yaoguang",
+      "action": "archive",
+      "details": null
+    }
+  ],
+  "metrics": {
+    "seat_participation": {},
+    "veto_count": 0,
+    "revision_count": 0
+  },
+  "veto": {
+    "seat": "Yuheng",
+    "reason": "Quality gate: Insufficient validation time for production deployment",
+    "timestamp": "2026-03-18T15:50:30.218888999Z"
+  },
+  "final_gate": {
+    "seat": "Tianshu",
+    "approved": true,
+    "timestamp": "2026-03-18T15:50:30.278062281Z"
+  },
+  "current_seat": null,
+  "seats_participated": [],
+  "artifacts": []
+}

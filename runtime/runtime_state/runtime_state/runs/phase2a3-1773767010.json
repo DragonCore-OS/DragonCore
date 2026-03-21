@@ -1,0 +1,38 @@
+{
+  "run_id": "phase2a3-1773767010",
+  "status": "Archived",
+  "task": "Fix ledger CSV backward compatibility issue. The ledger previously had 15 columns, now has 17 with risk_raised_count added. Old CSV data without this column causes parse failures. Implement backward-compatible parsing that handles both old (15-col) and new (17-col) formats. Add regression tests.",
+  "input_type": "code_fix",
+  "worktree_path": "./runtime_state/worktrees/phase2a3-1773767010",
+  "tmux_session": "dragoncore_phase2a3-1773767010",
+  "created_at": "2026-03-17T17:03:31.430893638Z",
+  "updated_at": "2026-03-17T17:14:19.050141734Z",
+  "events": [
+    {
+      "timestamp": "2026-03-17T17:14:14.061127848Z",
+      "seat": "Tianshu",
+      "action": "final_gate",
+      "details": "approved: true"
+    },
+    {
+      "timestamp": "2026-03-17T17:14:19.050140351Z",
+      "seat": "Yaoguang",
+      "action": "archive",
+      "details": null
+    }
+  ],
+  "metrics": {
+    "seat_participation": {},
+    "veto_count": 0,
+    "revision_count": 0
+  },
+  "veto": null,
+  "final_gate": {
+    "seat": "Tianshu",
+    "approved": true,
+    "timestamp": "2026-03-17T17:14:14.061127006Z"
+  },
+  "current_seat": null,
+  "seats_participated": [],
+  "artifacts": []
+}

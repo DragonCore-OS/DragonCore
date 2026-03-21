@@ -1,0 +1,12 @@
+{
+  "test_name": "Phase 3 Endurance Test",
+  "start_time": "2026-03-18T22:06:05.643340",
+  "end_time": "2026-03-19T02:11:16.091847",
+  "duration_minutes": 245.1741417833333,
+  "total_runs": 35,
+  "successful_runs": 35,
+  "failed_runs": 0,
+  "success_rate_percent": 100.0,
+  "total_seat_executions": 115,
+  "status": "PASSED"
+}

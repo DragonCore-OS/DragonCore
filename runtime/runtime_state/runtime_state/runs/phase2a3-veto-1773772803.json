@@ -1,0 +1,48 @@
+{
+  "run_id": "phase2a3-veto-1773772803",
+  "status": "Archived",
+  "task": "Propose adding a new 'emergency_shutdown' feature that allows any seat to immediately terminate a run. Discuss the governance implications and potential abuse risks.",
+  "input_type": "conflict_test",
+  "worktree_path": "./runtime_state/worktrees/phase2a3-veto-1773772803",
+  "tmux_session": "dragoncore_phase2a3-veto-1773772803",
+  "created_at": "2026-03-17T18:40:03.610626852Z",
+  "updated_at": "2026-03-17T18:41:36.357979728Z",
+  "events": [
+    {
+      "timestamp": "2026-03-17T18:41:12.309186514Z",
+      "seat": "Yuheng",
+      "action": "veto",
+      "details": "Security risk: Emergency shutdown without multi-seat consensus creates centralization vulnerability. Any compromised seat could abuse this power. Reject and require 3-seat approval for termination."
+    },
+    {
+      "timestamp": "2026-03-17T18:41:31.064304266Z",
+      "seat": "Tianshu",
+      "action": "final_gate",
+      "details": "approved: true"
+    },
+    {
+      "timestamp": "2026-03-17T18:41:36.357978506Z",
+      "seat": "Yaoguang",
+      "action": "archive",
+      "details": null
+    }
+  ],
+  "metrics": {
+    "seat_participation": {},
+    "veto_count": 0,
+    "revision_count": 0
+  },
+  "veto": {
+    "seat": "Yuheng",
+    "reason": "Security risk: Emergency shutdown without multi-seat consensus creates centralization vulnerability. Any compromised seat could abuse this power. Reject and require 3-seat approval for termination.",
+    "timestamp": "2026-03-17T18:41:12.309186133Z"
+  },
+  "final_gate": {
+    "seat": "Tianshu",
+    "approved": true,
+    "timestamp": "2026-03-17T18:41:31.064302874Z"
+  },
+  "current_seat": null,
+  "seats_participated": [],
+  "artifacts": []
+}

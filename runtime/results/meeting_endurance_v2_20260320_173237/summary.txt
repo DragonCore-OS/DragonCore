@@ -1,0 +1,34 @@
+Meeting Protocol + 4h Endurance 联合验证报告 V2
+==============================================
+
+基本信息:
+  开始时间: 2026-03-20 17:32:38
+  结束时间: 2026-03-20 18:32:39
+  总运行时间: 60分钟
+
+运行统计:
+  会议总数: 676
+  收敛成功: 0
+  收敛率: 0%
+
+会议层显式指标:
+  - meeting_sessions_opened: 1
+  - meeting_turns_published: 1
+  - stance_updates: 1
+  - challenge_windows_opened: 0
+  - smart_moderator_decisions: 0
+
+验证指标检查:
+  - 运行时间 ≥4h: ❌ FAIL
+  - 无人工干预: ✅ (自动化运行)
+  - 无崩溃: ✅ PASS
+  - 会议层激活: ✅ PASS
+
+详细指标: /home/admin/DragonCore-OS/DragonCore/runtime/results/meeting_endurance_v2_20260320_173237/metrics.csv
+原始日志: /home/admin/DragonCore-OS/DragonCore/runtime/results/meeting_endurance_v2_20260320_173237/logs/
+
+Replay验证:
+  抽样数量: 5
+  成功数量: 5
+  成功率: 100%
+

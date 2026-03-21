@@ -1,0 +1,38 @@
+{
+  "run_id": "endurance-1773853147",
+  "status": "Archived",
+  "task": "Review src/events/mod.rs for error handling patterns. Suggest improvements.",
+  "input_type": "code_review",
+  "worktree_path": "./runtime_state/worktrees/endurance-1773853147",
+  "tmux_session": "dragoncore_endurance-1773853147",
+  "created_at": "2026-03-18T16:59:07.640015422Z",
+  "updated_at": "2026-03-18T17:06:28.863182068Z",
+  "events": [
+    {
+      "timestamp": "2026-03-18T17:06:28.796122348Z",
+      "seat": "Tianshu",
+      "action": "final_gate",
+      "details": "approved: true"
+    },
+    {
+      "timestamp": "2026-03-18T17:06:28.863181527Z",
+      "seat": "Yaoguang",
+      "action": "archive",
+      "details": null
+    }
+  ],
+  "metrics": {
+    "seat_participation": {},
+    "veto_count": 0,
+    "revision_count": 0
+  },
+  "veto": null,
+  "final_gate": {
+    "seat": "Tianshu",
+    "approved": true,
+    "timestamp": "2026-03-18T17:06:28.796121537Z"
+  },
+  "current_seat": null,
+  "seats_participated": [],
+  "artifacts": []
+}

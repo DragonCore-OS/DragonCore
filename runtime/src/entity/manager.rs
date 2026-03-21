@@ -2,6 +2,8 @@ use crate::entity::identity::AIEntityIdentity;
 use crate::entity::status::{EntityStatus, StateTransitionRequest, StateTransitionValidator, StateTransitionRecord};
 use crate::entity::storage::{EntityStorage, StorageError};
 use crate::entity::archive::{Authority, EntityRank};
+use crate::entity::attribution::DecisionAttribution;
+use crate::entity::kpi::PeriodKPI;
 use crate::events::{GovernanceEvent, GovernanceEventType};
 use crate::governance::Seat;
 use chrono::Utc;
@@ -44,6 +46,10 @@ pub struct EntityManager {
     event_tx: mpsc::Sender<GovernanceEvent>,
     /// 状态转移历史
     transition_history: Arc<RwLock<HashMap<Uuid, Vec<StateTransitionRecord>>>>,
+    /// 决策归因缓存 (decision_id -> attribution)
+    attributions: Arc<RwLock<HashMap<Uuid, DecisionAttribution>>>,
+    /// KPI 缓存 (entity_id -> period -> kpi)
+    kpis: Arc<RwLock<HashMap<Uuid, HashMap<String, PeriodKPI>>>>,
 }
 
 impl EntityManager {
@@ -57,6 +63,8 @@ impl EntityManager {
             storage,
             event_tx,
             transition_history: Arc::new(RwLock::new(HashMap::new())),
+            attributions: Arc::new(RwLock::new(HashMap::new())),
+            kpis: Arc::new(RwLock::new(HashMap::new())),
         }
     }
     
@@ -394,6 +402,77 @@ impl EntityManager {
             .send(event)
             .await
             .map_err(|_| EntityError::EventSendFailed)
+    }
+    
+    // ===== PR-2: 归因与 KPI 方法 =====
+    
+    /// 记录决策归因
+    pub async fn record_attribution(&self, attribution: DecisionAttribution) -> Result<(), EntityError> {
+        let decision_id = attribution.decision_id;
+        
+        // 缓存归因
+        {
+            let mut attrs = self.attributions.write().await;
+            attrs.insert(decision_id, attribution.clone());
+        }
+        
+        // 发送 DIBL 事件
+        let event = attribution.to_event();
+        self.event_tx.send(event).await.map_err(|_| EntityError::EventSendFailed)?;
+        
+        Ok(())
+    }
+    
+    /// 获取决策归因
+    pub async fn get_attribution(&self, decision_id: Uuid) -> Option<DecisionAttribution> {
+        let attrs = self.attributions.read().await;
+        attrs.get(&decision_id).cloned()
+    }
+    
+    /// 列出实体的所有归因
+    pub async fn list_entity_attributions(&self, entity_id: Uuid) -> Vec<DecisionAttribution> {
+        let attrs = self.attributions.read().await;
+        attrs.values()
+            .filter(|a| {
+                a.primary_owner == entity_id 
+                || a.approving_authority == entity_id
+                || a.supporting.contains(&entity_id)
+                || a.challenging.contains(&entity_id)
+            })
+            .cloned()
+            .collect()
+    }
+    
+    /// 更新 KPI
+    pub async fn update_kpi(&self, kpi: PeriodKPI) -> Result<(), EntityError> {
+        let entity_id = kpi.entity_id;
+        let period = kpi.period.clone();
+        
+        // 缓存 KPI
+        {
+            let mut kpis = self.kpis.write().await;
+            kpis.entry(entity_id).or_default().insert(period, kpi.clone());
+        }
+        
+        // 发送 DIBL 事件
+        let event = kpi.to_event();
+        self.event_tx.send(event).await.map_err(|_| EntityError::EventSendFailed)?;
+        
+        Ok(())
+    }
+    
+    /// 获取实体 KPI
+    pub async fn get_kpi(&self, entity_id: Uuid, period: &str) -> Option<PeriodKPI> {
+        let kpis = self.kpis.read().await;
+        kpis.get(&entity_id)?.get(period).cloned()
+    }
+    
+    /// 列出实体的所有 KPI
+    pub async fn list_entity_kpis(&self, entity_id: Uuid) -> Vec<PeriodKPI> {
+        let kpis = self.kpis.read().await;
+        kpis.get(&entity_id)
+            .map(|m| m.values().cloned().collect())
+            .unwrap_or_default()
     }
 }
 

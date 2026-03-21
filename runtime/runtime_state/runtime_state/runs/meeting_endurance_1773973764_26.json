@@ -1,0 +1,21 @@
+{
+  "run_id": "meeting_endurance_1773973764_26",
+  "status": "Created",
+  "task": "risk",
+  "input_type": "general",
+  "worktree_path": "./runtime_state/worktrees/meeting_endurance_1773973764_26",
+  "tmux_session": "dragoncore_meeting_endurance_1773973764_26",
+  "created_at": "2026-03-20T02:29:24.820710027Z",
+  "updated_at": "2026-03-20T02:29:24.820710027Z",
+  "events": [],
+  "metrics": {
+    "seat_participation": {},
+    "veto_count": 0,
+    "revision_count": 0
+  },
+  "veto": null,
+  "final_gate": null,
+  "current_seat": null,
+  "seats_participated": [],
+  "artifacts": []
+}

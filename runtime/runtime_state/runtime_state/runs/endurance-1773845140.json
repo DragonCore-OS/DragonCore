@@ -1,0 +1,38 @@
+{
+  "run_id": "endurance-1773845140",
+  "status": "Archived",
+  "task": "Urgent: Deploy feature with tight deadline but incomplete testing. Risk assessment required.",
+  "input_type": "conflict",
+  "worktree_path": "./runtime_state/worktrees/endurance-1773845140",
+  "tmux_session": "dragoncore_endurance-1773845140",
+  "created_at": "2026-03-18T14:45:40.538527834Z",
+  "updated_at": "2026-03-18T14:50:47.712024706Z",
+  "events": [
+    {
+      "timestamp": "2026-03-18T14:50:47.652579361Z",
+      "seat": "Tianshu",
+      "action": "final_gate",
+      "details": "approved: true"
+    },
+    {
+      "timestamp": "2026-03-18T14:50:47.712024155Z",
+      "seat": "Yaoguang",
+      "action": "archive",
+      "details": null
+    }
+  ],
+  "metrics": {
+    "seat_participation": {},
+    "veto_count": 0,
+    "revision_count": 0
+  },
+  "veto": null,
+  "final_gate": {
+    "seat": "Tianshu",
+    "approved": true,
+    "timestamp": "2026-03-18T14:50:47.652578670Z"
+  },
+  "current_seat": null,
+  "seats_participated": [],
+  "artifacts": []
+}
