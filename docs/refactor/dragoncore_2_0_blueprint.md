@@ -402,3 +402,47 @@ For each PR slice, minimum reproducible checks:
 ## Appendix B: immediate blockers
 
 - Missing local checkouts for `deer-flow` and `paperclip` prevents completing mandatory tri-repo runtime/config/test-entrypoint inventory from source.
+
+---
+
+## PR-2 execution update (schema normalization slice)
+
+### Workspace inventory re-check (2026-03-26 UTC)
+- Re-checked workspace inventory before coding PR-2.
+- `DragonCore` remains present.
+- `/workspace/deer-flow` and `/workspace/paperclip` are still absent.
+- This does **not** block PR-2 because PR-2 is kernel-local; cross-repo blocker remains applicable for PR-4+ and PR-5+.
+
+### PR-2 schema decisions (kernel-local)
+- Added normalized config domains:
+  - `brains`
+  - `provider_registry`
+  - `model_registry`
+  - `seat_policies`
+  - `tool_adapters` (stub-only)
+  - `evolution` (forge extension point; disabled by default)
+- Added root `config_schema_version` and `state_schema` compatibility planning markers.
+- Added explicit dual-read normalization strategy:
+  - legacy: `[providers]` + `[seat_models]` -> normalized internal representation
+  - normalized: new schema blocks -> same normalized internal representation
+
+### Normalization rules (PR-2)
+- Legacy and normalized schema families are parsed by one `Config` object but normalized by explicit mode selection.
+- Guardrails reject mixed conflicting definitions (no silent coercion):
+  - legacy `providers` mixed with normalized `provider_registry`
+  - legacy `seat_models` mixed with normalized `seat_policies`
+- Validation now rejects:
+  - unsupported schema versions
+  - model entries that reference unknown providers
+  - seat policies referencing unknown models
+  - invalid fallback chains (duplicates, missing references, primary repeated in fallback)
+
+### Deferred to PR-3
+- Full arbitration extraction from runtime into dedicated arbitration engine.
+- Runtime-wide propagation of detailed arbitration trace emission at each selection point.
+- Policy-driven candidate scoring, outage cooldown orchestration, and retry policy execution.
+
+### Evolution/Forge extension point note
+- `evolution` config is reserved and parseable in PR-2.
+- Default is disabled.
+- No scheduling, autonomous loop, or runtime behavior tied to this block yet.

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use crate::config::Config;
+use crate::config::{Config, NormalizedConfig};
 use crate::events::{DiblManager, EventChannel, EventScope, GovernanceEvent, GovernanceEventType, JsonlEventStore, Severity};
 use crate::governance::{GovernanceEngine, Seat};
 use crate::ledger::{Ledger, StabilityMetrics};
@@ -18,6 +18,7 @@ use crate::worktree::{RunContext, WorktreeManager};
 /// DragonCore Runtime
 pub struct DragonCoreRuntime {
     config: Config,
+    normalized_config: NormalizedConfig,
     governance: Arc<RwLock<GovernanceEngine>>,
     ledger: Arc<RwLock<Ledger>>,
     store: Arc<JsonFileStore>,
@@ -31,6 +32,8 @@ pub struct DragonCoreRuntime {
 impl DragonCoreRuntime {
     /// Create a new runtime instance
     pub async fn new(config: Config) -> Result<Self> {
+        let normalized_config = config.normalize()?;
+
         // Initialize persistence store
         let storage_path = config.execution.worktree_base.join("../runtime_state/runs");
         let store = Arc::new(JsonFileStore::new(&storage_path)?);
@@ -55,9 +58,9 @@ impl DragonCoreRuntime {
         );
         worktree.check_git()?;
         
-        // Initialize model router
+        // Initialize model router from normalized provider registry
         let mut model_router = ModelRouter::new();
-        for (name, provider_config) in &config.providers {
+        for (name, provider_config) in &normalized_config.provider_registry {
             // Check if we should use kimi-cli for Kimi Code keys
             let provider_name = if matches!(provider_config.provider_type, crate::config::ProviderType::KimiCli) {
                 "kimi-cli"
@@ -76,16 +79,22 @@ impl DragonCoreRuntime {
             }
         }
         
-        // Configure seat-to-model mappings for multi-model support
-        if let Some(ref seat_models) = config.seat_models {
-            model_router.configure_seat_mappings(seat_models.mapping.clone());
-            model_router.set_default_provider(&seat_models.default);
-            tracing::info!("Configured seat model mappings: {:?}", model_router.get_seat_mappings());
-        } else if !config.providers.is_empty() {
-            // Set first provider as default if no mappings configured
-            if let Some(first_provider) = config.providers.keys().next() {
-                model_router.set_default_provider(first_provider.clone());
+        // Configure seat routing from normalized seat policies
+        let mut seat_mapping = HashMap::new();
+        for (seat, policy) in &normalized_config.seat_policies {
+            if let Some(model_cfg) = normalized_config.model_registry.get(&policy.primary_model) {
+                seat_mapping.insert(seat.clone(), model_cfg.provider.clone());
             }
+        }
+        if !seat_mapping.is_empty() {
+            model_router.configure_seat_mappings(seat_mapping);
+            tracing::info!("Configured normalized seat policies for routing");
+        }
+
+        if let Some(default_provider) = normalized_config.provider_for_seat(Some(&normalized_config.brains.sovereign_seat)) {
+            model_router.set_default_provider(default_provider.to_string());
+        } else if let Some(first_provider) = normalized_config.provider_registry.keys().next() {
+            model_router.set_default_provider(first_provider.clone());
         }
         
         // Initialize DIBL event store
@@ -96,6 +105,7 @@ impl DragonCoreRuntime {
         
         Ok(Self {
             config,
+            normalized_config,
             governance: Arc::new(RwLock::new(governance)),
             ledger: Arc::new(RwLock::new(ledger)),
             store,
@@ -114,7 +124,7 @@ impl DragonCoreRuntime {
         let task = task.into();
         
         // Check if providers are configured
-        if self.config.providers.is_empty() {
+        if !self.normalized_config.has_providers() {
             anyhow::bail!(
                 "No model providers configured.\n\n\
                 To use DragonCore, you need to configure at least one AI provider.\n\
