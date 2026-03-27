@@ -247,6 +247,53 @@ First-run flow (kernel-driven, UI-rendered):
 
 ---
 
+## 3.9 Terminology Layering Contract (kernel-safe naming boundary)
+
+This contract defines a strict three-layer terminology boundary to prevent UI/brand copy from destabilizing kernel schemas or machine-queryable logs.
+
+### Layer A — Kernel / Config / API / Log terminology (engineering-stable)
+- Scope: persistence schema, config keys, runtime structs, API fields, event/log payload fields.
+- Rule: names must remain machine-safe, explicit, and stable across migrations.
+- Current examples that must remain stable:
+  - `provider_registry`
+  - `model_registry`
+  - `seat_policies`
+  - `tool_adapters`
+  - `evolution`
+
+### Layer B — UI / Operator terminology (display labels)
+- Scope: onboarding copy, labels, operator-facing navigation text, tooltip/help language.
+- Rule: display labels can vary by product-language guidance, but must map to Layer A stable IDs/keys.
+- DTO/UI contracts should carry both:
+  - stable `id` / `machine_name` (Layer A)
+  - localized/display `label` (Layer B)
+
+### Layer C — Narrative / Brand terminology
+- Scope: brand art direction, thematic copywriting, marketing narratives.
+- Rule: narrative terms must not become canonical config/event/persistence names unless explicitly approved through schema governance.
+
+### Allowed vs forbidden mapping examples
+
+Allowed:
+- UI label `Sovereign Brain` -> internal key `brains.sovereign_seat`
+- UI label `Research Tools` -> internal key `tool_adapters`
+- UI label `Primary Council Model` -> internal key `seat_policies.<seat>.primary_model`
+
+Forbidden:
+- Renaming `provider_registry` to `dragon_veins` in runtime config schema
+- Renaming `model_registry` to `imperial_seal` in persisted event payloads
+- Storing only display-copy field names in logs/events without stable machine fields
+
+### Product-language source constraint
+- Product-language source documents (including Kimi CLI source copy) constrain Layer B/C wording.
+- They do **not** redefine Layer A kernel schema, API names, or log field contracts.
+
+### Logging and replay rule
+- Stored logs/events remain technically legible and queryable using stable machine fields.
+- UI may render sovereign/product terminology on top, but replay/search must operate on Layer A field names.
+
+---
+
 ## 4) Boundary contracts between repos
 
 ## 4.1 Kernel ↔ Model arbitration (internal contract)
@@ -325,6 +372,10 @@ First-run flow (kernel-driven, UI-rendered):
 ### PR-3: provider/model arbitration abstraction
 - Introduce arbitration module and structured trace events.
 - Update runtime call points.
+- Terminology layering in PR-3:
+  - internal trace/config keys stay Layer A (`provider_registry`, `model_registry`, `seat_policies`, `tool_adapters`, `evolution`)
+  - any sovereign/thematic wording is display-label-only metadata (Layer B)
+  - arbitration traces remain queryable/searchable by stable technical fields, not narrative labels.
 
 ### PR-4: onboarding skeleton + terminology
 - Kernel onboarding flow object model.
