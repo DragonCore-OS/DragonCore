@@ -5,6 +5,7 @@ use clap::{Parser, Subcommand};
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
 
+mod arbitration;
 mod config;
 mod entity;
 mod events;
